@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(255, 244, 214, 0.9), transparent 32%),
+                linear-gradient(135deg, #f7f3ea 0%, #eef3f7 100%);
+            color: #222;
+        }
+
+        .page {
+            width: 100%;
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 32px 20px 48px;
+        }
+
+        .header {
+            margin-bottom: 28px;
+        }
+
+        .system-name {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            margin: 0;
+        }
+
+        .system-subtitle {
+            margin-top: 8px;
+            font-size: 14px;
+            color: #7a756b;
+        }
+
+        .date-row {
+            margin-top: 32px;
+            font-size: 20px;
+            font-weight: 600;
+            color: #2f2d29;
+        }
+
+        .hero-card {
+            margin-top: 20px;
+            padding: 26px;
+            border-radius: 28px;
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(18px);
+            box-shadow: 0 20px 60px rgba(80, 70, 50, 0.10);
+            border: 1px solid rgba(255, 255, 255, 0.75);
+        }
+
+        .card-label {
+            font-size: 14px;
+            color: #8b8376;
+            margin-bottom: 12px;
+        }
+
+        .main-sentence {
+            font-size: 25px;
+            line-height: 1.45;
+            font-weight: 650;
+            letter-spacing: -0.04em;
+            margin: 0;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-top: 24px;
+        }
+
+        .status-item {
+            padding: 16px;
+            border-radius: 20px;
+            background: rgba(246, 242, 233, 0.75);
+        }
+
+        .status-title {
+            font-size: 13px;
+            color: #8b8376;
+            margin-bottom: 6px;
+        }
+
+        .status-value {
+            font-size: 18px;
+            font-weight: 650;
+        }
+
+        .section-title {
+            margin-top: 34px;
+            margin-bottom: 14px;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .task-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 18px;
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.68);
+            box-shadow: 0 10px 30px rgba(70, 70, 70, 0.06);
+            margin-bottom: 12px;
+        }
+
+        .task-circle {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid #b9afa0;
+            flex-shrink: 0;
+        }
+
+        .task-text {
+            font-size: 16px;
+            color: #33302b;
+        }
+
+        .add-button {
+            margin-top: 16px;
+            width: 100%;
+            border: none;
+            border-radius: 22px;
+            padding: 17px 18px;
+            font-size: 16px;
+            font-weight: 650;
+            color: #3f372d;
+            background: rgba(255, 255, 255, 0.76);
+            box-shadow: 0 12px 34px rgba(80, 70, 50, 0.08);
+            cursor: pointer;
+        }
+
+        .bottom-note {
+            margin-top: 34px;
+            padding-top: 22px;
+            border-top: 1px solid rgba(120, 110, 90, 0.16);
+            color: #7a756b;
+            line-height: 1.7;
+            font-size: 15px;
+        }
+
+        @media (max-width: 520px) {
+            .page {
+                padding: 26px 16px 40px;
+            }
+
+            .system-name {
+                font-size: 25px;
+            }
+
+            .main-sentence {
+                font-size: 23px;
+            }
+
+            .hero-card {
+                padding: 22px;
+                border-radius: 24px;
+            }
+
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="page">
+        <header class="header">
+            <h1 class="system-name">个人观察助手</h1>
+            <div class="system-subtitle">Personal Observation System</div>
+
+            <div class="date-row">
+                {{ date_text }} · {{ weekday_text }}
+            </div>
+        </header>
+
+        <section class="hero-card">
+            <div class="card-label">今日观察</div>
+
+            <p class="main-sentence">
+                今天不用完美，<br>
+                先真实地留下痕迹。
+            </p>
+
+            <div class="status-grid">
+                <div class="status-item">
+                    <div class="status-title">状态</div>
+                    <div class="status-value">待记录</div>
+                </div>
+
+                <div class="status-item">
+                    <div class="status-title">完成</div>
+                    <div class="status-value">{{ done_count }} / {{ total_count}} </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="section-title">今日任务</h2>
+
+        {% if tasks %}
+            {% for task in tasks %}
+                <div class="task-card">
+                    <div class="task-circle"></div>
+                    <div class="task-text">{{ task.title }}</div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="task-card">
+                <div class="task-circle"></div>
+                <div class="task-text">暂时还没有任务，先添加一条今天想观察的行动。</div>
+            </div>
+        {% endif %}
+
+            <button class="add-button">
+                ＋ 添加一条观察任务
+            </button>
+        </section>
+
+        <p class="bottom-note">
+            今天的重点不是满分，<br>
+            是让真实发生过的东西被看见。
+        </p>
+    </main>
+</body>
+</html>
