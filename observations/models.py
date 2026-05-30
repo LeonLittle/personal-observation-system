@@ -1,4 +1,52 @@
 from django.db import models
+from datetime import date
+
+class DailyRecord(models.Model):
+    """
+    DailyRecord 代表某一天的个人状态记录
+
+    这个模型是"个人观察助手"的核心之一
+    它不是记录任务,而是记录这一天的:
+    1.今天心情如何
+    2.今天精力如何
+    3.今天发生了什么
+    verbose_name参数:显示名称
+    """
+
+    date = models.DateField(
+        default=date.today,
+        unique=True,
+        verbose_name="日期"
+    )
+
+    mood =models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name="心情"
+    )
+
+    energy = models.IntegerField(
+        null=True,
+        blank=True,
+        verbose_name="精力分"
+    )
+
+    summary = models.TextField(
+        blank=True,
+        verbose_name = "今日总结"
+    )
+
+    updated_at=models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="创建时间"
+    )
+
+    def __str__(self):
+        """
+        在后台调试时,显示这条记录对应的日期
+        """
+        return str(self.date)
+
 
 class Task(models.Model):
     """

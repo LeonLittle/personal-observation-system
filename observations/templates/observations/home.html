@@ -117,30 +117,139 @@
             margin-bottom: 12px;
         }
 
+        
+        .task-card.done {
+            opacity: 0.62;
+        }
+
+        .task-card.done .task-text {
+            text-decoration: line-through;
+            color: #8b8376;
+        }
+
         .task-circle {
             width: 22px;
             height: 22px;
             border-radius: 50%;
             border: 2px solid #b9afa0;
             flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #6f665c;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 700;
         }
 
         .task-text {
+            flex: 1;
             font-size: 16px;
             color: #33302b;
         }
 
-        .add-button {
+        .delete-link {
+            /*删除按钮的样式*/
+            color: #b0a69a;
+            font-size: 14px;
+            text-decoration: none;
+            padding: 6px 8px;
+            border-radius: 12px;
+        }
+
+        .delete-link:hover {
+            color: #6f665c;
+            background: rgba(120, 110, 90, 0.08);
+        }
+
+        .add-form {
+            display: flex;
+            gap: 12px;
             margin-top: 16px;
-            width: 100%;
+        }
+
+        .task-input {
+            flex: 1;
             border: none;
+            outline: none;
             border-radius: 22px;
             padding: 17px 18px;
+            font-size: 16px;
+            color: #33302b;
+            background: rgba(255, 255, 255, 0.76);
+            box-shadow: 0 12px 34px rgba(80, 70, 50, 0.08);
+        }
+
+        .task-input::placeholder {
+            color: #aaa196;
+        }
+
+        .add-button {
+            border: none;
+            border-radius: 22px;
+            padding: 17px 20px;
             font-size: 16px;
             font-weight: 650;
             color: #3f372d;
             background: rgba(255, 255, 255, 0.76);
             box-shadow: 0 12px 34px rgba(80, 70, 50, 0.08);
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .record-section {
+            margin-top: 34px;
+        }
+
+        .record-form {
+            padding: 22px;
+            border-radius: 26px;
+            background: rgba(255, 255, 255, 0.68);
+            box-shadow: 0 12px 34px rgba(80, 70, 50, 0.08);
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            margin-top: 16px;
+            font-size: 14px;
+            color: #7a756b;
+        }
+
+        .form-label:first-child {
+            margin-top: 0;
+        }
+
+        .record-input,
+        .record-textarea {
+            width: 100%;
+            border: none;
+            outline: none;
+            border-radius: 18px;
+            padding: 14px 16px;
+            font-size: 15px;
+            color: #33302b;
+            background: rgba(246, 242, 233, 0.75);
+            font-family: inherit;
+        }
+
+        .record-textarea {
+            min-height: 96px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+
+        .save-record-button {
+            margin-top: 18px;
+            width: 100%;
+            border: none;
+            border-radius: 20px;
+            padding: 15px 18px;
+            font-size: 15px;
+            font-weight: 650;
+            color: #3f372d;
+            background: rgba(255, 255, 255, 0.82);
+            box-shadow: 0 10px 28px rgba(80, 70, 50, 0.08);
             cursor: pointer;
         }
 
@@ -153,10 +262,15 @@
             font-size: 15px;
         }
 
-        @media (max-width: 520px) {
+        @media (max-width: 520px) { #手机端
             .page {
                 padding: 26px 16px 40px;
             }
+
+            .add-form {
+                flex-direction: column;
+            }
+
 
             .system-name {
                 font-size: 25px;
@@ -200,7 +314,13 @@
             <div class="status-grid">
                 <div class="status-item">
                     <div class="status-title">状态</div>
-                    <div class="status-value">待记录</div>
+                    <div class="status-value">
+                        {% if today_record.mood %}
+                            {{ today_record.mood }}
+                        {% else %}
+                            待记录
+                        {% endif %}
+                    </div>
                 </div>
 
                 <div class="status-item">
@@ -215,9 +335,16 @@
 
         {% if tasks %}
             {% for task in tasks %}
-                <div class="task-card">
-                    <div class="task-circle"></div>
+                <div class="task-card {% if task.is_done %}done{% endif %}">
+                    <a class="task-circle" href="{% url 'toggle_task' task.id %}">
+                        {% if task.is_done %}✓{% endif %}
+                    </a>
+
                     <div class="task-text">{{ task.title }}</div>
+
+                    <a class="delete-link" href="{% url 'delete_task' task.id %}">
+                        删除
+                    </a>
                 </div>
             {% endfor %}
         {% else %}
@@ -227,9 +354,64 @@
             </div>
         {% endif %}
 
-            <button class="add-button">
-                ＋ 添加一条观察任务
+        <form class="add-form" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="task">
+
+            <input 
+                class="task-input"
+                type="text"
+                name="title"
+                placeholder="添加一个专属时刻"
+                autocomplete="off"
+            >
+
+            <button class="add-button" type="submit">
+                ＋ 添加
             </button>
+        </form>
+
+        <section class="record-section">
+            <h2 class="section-title">今日状态记录</h2>
+
+            <form class="record-form" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="daily_record">
+
+                <label class="form-label">今天的心情</label>
+                <input
+                    class="record-input"
+                    type="text"
+                    name="mood"
+                    placeholder="例如：平稳、疲惫、焦躁、充实"
+                    value="{{ today_record.mood }}"
+                >
+
+                <label class="form-label">今天的精力分</label>
+                <input
+                    class="record-input"
+                    type="number"
+                    name="energy"
+                    min="1"
+                    max="10"
+                    placeholder="1-10"
+                    value="{{ today_record.energy|default_if_none:'' }}"
+                >
+
+                <label class="form-label">今日总结</label>
+                <textarea
+                    class="record-textarea"
+                    name="summary"
+                    placeholder="今天真实发生了什么？"
+                >{{ today_record.summary }}</textarea>
+
+                <button class="save-record-button" type="submit">
+                    保存今日状态
+                </button>
+            </form>
+        </section>
+
+
         </section>
 
         <p class="bottom-note">
