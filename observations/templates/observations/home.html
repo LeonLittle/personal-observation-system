@@ -106,6 +106,19 @@
             font-weight: 700;
         }
 
+        .record-entry {
+            display: block;
+            margin-top: 16px;
+            padding: 16px 18px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.68);
+            box-shadow: 0 10px 30px rgba(70, 70, 70, 0.06);
+            color: #3f372d;
+            font-size: 15px;
+            font-weight: 650;
+            text-decoration: none;
+        }
+
         .task-card {
             display: flex;
             align-items: center;
@@ -330,6 +343,10 @@
             </div>
         </section>
 
+        <a class="record-entry" href="{% url 'record' %}">
+            记录今日状态 →
+        </a>
+
         <section>
             <h2 class="section-title">今日任务</h2>
 
@@ -370,48 +387,6 @@
                 ＋ 添加
             </button>
         </form>
-
-        <section class="record-section">
-            <h2 class="section-title">今日状态记录</h2>
-
-            <form class="record-form" method="post">
-                {% csrf_token %}
-                <input type="hidden" name="form_type" value="daily_record">
-
-                <label class="form-label">今天的心情</label>
-                <input
-                    class="record-input"
-                    type="text"
-                    name="mood"
-                    placeholder="例如：平稳、疲惫、焦躁、充实"
-                    value="{{ today_record.mood }}"
-                >
-
-                <label class="form-label">今天的精力分</label>
-                <input
-                    class="record-input"
-                    type="number"
-                    name="energy"
-                    min="1"
-                    max="10"
-                    placeholder="1-10"
-                    value="{{ today_record.energy|default_if_none:'' }}"
-                >
-
-                <label class="form-label">今日总结</label>
-                <textarea
-                    class="record-textarea"
-                    name="summary"
-                    placeholder="今天真实发生了什么？"
-                >{{ today_record.summary }}</textarea>
-
-                <button class="save-record-button" type="submit">
-                    保存今日状态
-                </button>
-            </form>
-        </section>
-
-
         </section>
 
         <p class="bottom-note">

@@ -46,41 +46,26 @@ def home(request):
             #获取浏览器提交的("title")数据给到变量title
 
             if title:
-                Task.objects.create(title=title)
+                Task.objects.create(
+                    title=title,
+                    daily_record=today_record,
+                )
             #如果变量title里有数据 create就在Task类里添加一条数据
             #并把变量里的title数据 保存到Task类里的title字段
+            #daily_record=today_record
             
             #刷新home页面
             return redirect("home")
 
-        if form_type =="daily_record":
-            #判断form_type变量里的数据是不是daily_record
 
-            today_record.mood = request.POST.get("mood","")
-            #获取浏览器里提交的mood内容,保存到today_record对象里的mood字段,如果没有就为空字符串
 
-            energy = request.POST.get("energy")
-            #获取浏览器提交的("energy")字符串数据先给到变量energy
-
-            today_record.summary = request.POST.get("summary","")
-            #获取浏览器里提交的summary内容,保存到today_record对象里的sunmmary字段,如果没有就为空字符串
-
-        if energy:
-            #判断用户有没填写energy数据
-
-            today_record.energy = int(energy)
-            #把字符串energy转换成整型,保存到today_record数据表里的energy字段
-        
-            today_record.save()
-            #.save()保存today_record数据
-
-            return redirect("home")
-            #刷新home页面
-
-    tasks = Task.objects.all().order_by("-created_at")
+    tasks = Task.objects.filter(
+        daily_record=today_record
+    ).order_by("-created_at")
     #created_at是Task里创建时间字段
     #("-created_at")-倒序
     #.order_by() 按某个字段排序
+    #daily_record=today_record 把这条任务绑定到今天这条日期上
 
     total_count = tasks.count()
     #.count()统计数量
@@ -109,6 +94,48 @@ def home(request):
 
     return render(request,"observations/home.html",context)
     #把context的数据交给"observations/home.html" render生成到最终页面
+
+def record_view(request):
+    """
+    今日状态页视图函数。
+
+    这个页面专门负责：
+    1. 显示今天的心情、精力、总结
+    2. 保存今日状态记录
+    3. 保存后回到首页
+    """
+    today = datetime.now()
+
+    today_record,created =DailyRecord.objects.get_or_create(
+        date=today.date()
+    )
+
+    if request.method == "POST":
+        today_record.mood = request.POST.get("mood","")
+
+        energy = request.POST.get("energy")
+
+        today_record.summary = request.POST.get("summary","")
+
+        if energy:
+            today_record.energy = int(energy)
+        else:
+            today_record.energy = None
+
+        today.record.save()
+        #保存
+
+        return redirect("home")
+        #保存后回到首页
+
+    context = {
+        "title":"今日状态记录",
+        "date_text" : today.strftime("%m月%d日"),
+        "weekday_text":["星期一","星期二","星期三","星期四","星期五","星期六","星期日"][today.weekday()],
+        "today_record":today_record,
+    }
+    
+    return render(request,"observations/record.html",context)
 
 def toggle_task(request,task_id):
     """

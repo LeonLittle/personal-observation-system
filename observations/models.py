@@ -60,7 +60,6 @@ class Task(models.Model):
     """
     Task 代表一条每日任务
 
-    现在是第一版，所以字段先保持简单：
     1. title:任务内容
     2. is_done:是否完成
     3. created_at:创建时间
@@ -72,7 +71,26 @@ class Task(models.Model):
     9.default默认参数
     10.auto_now_add记录第一次创建时间
     11.str 对象默认显示名称
+    12..CASCADE级联删除,一起删除
+    13..Foreignkey建立关系 指向一对多关系
+    14.DailyRecord被指向的对象
+    14.on_delete指向关联对象删除时状态
+    15.related_name反向查找任务
+    16.tasks以后可以从一条 DailyRecord 反过来找到它下面的所有 Task,名字叫 tasks
     """
+
+    daily_record = models.ForeignKey(
+        DailyRecord,
+        on_delete = models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="tasks",
+        verbose_name="所属日期记录"
+    )
+    #ForeignKey每一条Task任务,都指向一条DailyRecord每日记录 
+    #on_delete = models.CASCADE阿如果被指向的DailyRecord被删除,那么指向它的Task也一起删除
+    #related_name
+
 
     title = models.CharField(
         max_length=100,verbose_name="任务标题"
