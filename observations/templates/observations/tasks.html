@@ -337,21 +337,6 @@
             </div>
         </section>
 
-        <!-- <form class="add-form" method="post">
-            {% csrf_token %}
-
-            <input
-                class="task-input"
-                type="text"
-                name="title"
-                placeholder="添加一个今天的行动"
-                autocomplete="off"
-            >
-
-            <button class="add-button" type="submit">
-                ＋ 添加
-            </button>
-        </form> -->
         <form class="add-form" method="post">
         {% csrf_token %}
 
@@ -437,7 +422,7 @@
                                     ✓
                                 </a>
 
-                                <div class="task-text">{{ task.title }}</div>
+                                
 
                                 <div class="task-text">{{ task.title }}</div>
 
