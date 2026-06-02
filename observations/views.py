@@ -27,6 +27,7 @@ def home(request):
     #命名了一个today变量来获取今日日期+时间
 
     today_record,created = DailyRecord.objects.get_or_create(
+        user=request.user,
         date=today.date()
     )
     #today_record接收DailyRecord里的符合today.date日期的数据 
@@ -132,6 +133,7 @@ def task_list_view(request):
     today=datetime.now()
 
     today_record,created = DailyRecord.objects.get_or_create(
+        user=request.user,
         date=today.date()
     )
 
@@ -186,6 +188,7 @@ def record_view(request):
     today = datetime.now()
 
     today_record,created =DailyRecord.objects.get_or_create(
+        user=request.user,
         date=today.date()
     )
 
@@ -227,7 +230,9 @@ def history_view(request):
     3.把整理好的历史数据交给history.html显示
     """
 
-    records = DailyRecord.objects.all().order_by("-date")[:7]
+    records = DailyRecord.objects.filter(
+        user=request.user
+    ).order_by("-date")[:7]
 
     history_items = []
 

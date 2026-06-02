@@ -3,6 +3,7 @@ from django.db import models
 from datetime import date
 #datetime=python自带时间管理工具箱
 #date是datetime时间管理工具箱里面的纯日期
+from django.contrib.auth.models import User
 
 class DailyRecord(models.Model):
     """
@@ -16,9 +17,19 @@ class DailyRecord(models.Model):
     verbose_name参数:显示名称
     """
 
+    # 记录这一天属于哪个用户
+    # null=True / blank=True 是为了兼容之前已经存在的测试数据
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        verbose_name="所属用户"
+    )
+
     date = models.DateField(
         default=date.today, #default=默认值 date.today=今天的日期 default=date.today=如果没有指定日期,就默认为今天的日期
-        unique=True,    #unique=唯一 unique+True  =  唯一+开启 =  这个日期不能重复
+        # unique=True,    #unique=唯一 unique+True  =  唯一+开启 =  这个日期不能重复
         verbose_name="日期"
     )
     #models.DateField=纯日期字段
