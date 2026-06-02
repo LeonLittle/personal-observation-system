@@ -1,5 +1,6 @@
 from django.shortcuts import render,redirect,get_object_or_404
-from datetime import timezone
+from django.utils import timezone
+from datetime import datetime
 from .models import Task,DailyRecord
 #1. render作用:把数据交给HTML页面,然后生成网页返回给浏览器 意思:生成网页
 #2. redirect作用:跳转到另一个页面  意思:保存完任务后,重新回到首页 
