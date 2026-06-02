@@ -122,6 +122,52 @@
             white-space: nowrap;
         }
 
+        .time-details {
+            margin-top: 12px;
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.56);
+            box-shadow: 0 8px 24px rgba(80, 70, 50, 0.05);
+        }
+
+        .time-details summary {
+            cursor: pointer;
+            color: #7a756b;
+            font-size: 14px;
+            font-weight: 650;
+            list-style: none;
+        }
+
+        .time-details summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .time-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .time-field label {
+            display: block;
+            margin-bottom: 6px;
+            color: #8b8376;
+            font-size: 12px;
+        }
+
+        .time-input {
+            width: 100%;
+            border: none;
+            outline: none;
+            border-radius: 14px;
+            padding: 12px 14px;
+            font-size: 15px;
+            color: #33302b;
+            background: rgba(246, 242, 233, 0.85);
+            font-family: inherit;
+        }
+
         .section-title {
             margin-top: 34px;
             margin-bottom: 14px;
@@ -168,6 +214,12 @@
             flex: 1;
             font-size: 16px;
             color: #33302b;
+        }
+
+        .task-time {
+            color: #9a9186;
+            font-size: 13px;
+            white-space: nowrap;
         }
 
         .delete-link {
@@ -221,6 +273,10 @@
                 font-size: 25px;
             }
 
+            .time-row {
+                grid-template-columns: 1fr;
+            }
+
             .summary-row {
                 flex-direction: row;
                 gap: 8px;
@@ -240,6 +296,10 @@
 
             .add-form {
                 flex-direction: column;
+            }
+
+            .task-time {
+                font-size: 12px;
             }
         }
     </style>
@@ -277,7 +337,7 @@
             </div>
         </section>
 
-        <form class="add-form" method="post">
+        <!-- <form class="add-form" method="post">
             {% csrf_token %}
 
             <input
@@ -291,7 +351,46 @@
             <button class="add-button" type="submit">
                 ＋ 添加
             </button>
-        </form>
+        </form> -->
+        <form class="add-form" method="post">
+        {% csrf_token %}
+
+        <input
+            class="task-input"
+            type="text"
+            name="title"
+            placeholder="添加一个今天的行动"
+            autocomplete="off"
+        >
+
+        <details class="time-details">
+            <summary>＋ 设置时间</summary>
+
+            <div class="time-row">
+                <div class="time-field">
+                    <label>开始</label>
+                    <input
+                        class="time-input"
+                        type="time"
+                        name="planned_start"
+                    >
+                </div>
+
+                <div class="time-field">
+                    <label>结束</label>
+                    <input
+                        class="time-input"
+                        type="time"
+                        name="planned_end"
+                    >
+                </div>
+            </div>
+        </details>
+
+        <button class="add-button" type="submit">
+            ＋ 添加
+        </button>
+    </form>
 
         <section>
             <h2 class="section-title">未完成</h2>
@@ -302,6 +401,16 @@
                         <a class="task-circle" href="{% url 'toggle_task' task.id %}"></a>
 
                         <div class="task-text">{{ task.title }}</div>
+
+                        {% if task.planned_start and task.planned_end %}
+                            <div class="task-time">
+                                {{ task.planned_start|time:"H:i" }}-{{ task.planned_end|time:"H:i" }}
+                            </div>
+                        {% elif task.planned_start %}
+                            <div class="task-time">
+                                {{ task.planned_start|time:"H:i" }}
+                            </div>
+                        {% endif %}
 
                         <a class="delete-link" href="{% url 'delete_task' task.id %}">
                             删除
@@ -329,6 +438,22 @@
                                 </a>
 
                                 <div class="task-text">{{ task.title }}</div>
+
+                                <div class="task-text">{{ task.title }}</div>
+
+                                {% if task.completed_at %}
+                                    <div class="task-time">
+                                        {{ task.completed_at|date:"H:i" }}完成
+                                    </div>
+                                {% elif task.planned_start and task.planned_end %}
+                                    <div class="task-time">
+                                        {{ task.planned_start|time:"H:i" }}-{{ task.planned_end|time:"H:i" }}
+                                    </div>
+                                {% elif task.planned_start %}
+                                    <div class="task-time">
+                                        {{ task.planned_start|time:"H:i" }}
+                                    </div>
+                                {% endif %}
 
                                 <a class="delete-link" href="{% url 'delete_task' task.id %}">
                                     删除

@@ -114,6 +114,24 @@ class Task(models.Model):
     )
     #BooleanField布尔字段 只有True/False这两种状态  default=False默认是空,手动完成
 
+    planned_start = models.TimeField(
+        null=True,
+        blank=True,
+        verbose_name="计划开始时间"
+    )
+
+    planned_end = models.TimeField(
+        null=True,
+        blank=True,
+        verbose_name="计划结束时间"
+    )
+
+    completed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="实际完成时间"
+    )
+
     created_at = models.DateTimeField(
         auto_now_add=True,verbose_name="创建时间"
     )

@@ -140,10 +140,17 @@ def task_list_view(request):
     if request.method == "POST":
         title = request.POST.get("title")
 
+    # 获取用户填写的计划开始时间和计划结束时间。
+    # 如果用户没有填写，就用 None，表示这个任务没有设置时间。
+        planned_start = request.POST.get("planned_start") or None
+        planned_end = request.POST.get("planned_end") or None
+
         if title:
             Task.objects.create(
                 title=title,
-                daily_record=today_record
+                daily_record=today_record,
+                planned_start=planned_start,
+                planned_end=planned_end
             )
 
         return redirect("task_list")
@@ -257,48 +264,51 @@ def history_view(request):
     return render(request,"observations/history.html",context)
 
 @login_required
-def toggle_task(request,task_id):
+def delete_task(request, task_id):
     """
-    toggle切换 任务完成状态
+    删除任务视图函数。
 
     作用：
     1. 根据 task_id 找到对应任务
-    2. 如果任务未完成,就改成已完成
-    3. 如果任务已完成,就恢复成未完成
-    4.保存到数据库
-    5. 回到首页
+    2. 删除这条任务
+    3. 删除后回到首页
     """
 
-    task = get_object_or_404(Task,id=task_id)
-    #不知道什么意思
+    # 根据任务 id 从数据库里找到这条任务
+    # 如果找不到，就返回 404 页面，避免程序报错
+    task = get_object_or_404(Task, id=task_id)
 
-    task.is_done = not task.is_done
-    #访问task对象里的is_done字段 not 取反 代表的是True/Flash
-    #然后保存到左边的task.is_done里
+    # 删除这条任务
+    task.delete()
 
-    task.save()
-    #保存task的数据
-
+    # 删除完成后，回到首页
     return redirect("home")
-    #刷新home页面
 
 @login_required
-def delete_task(request,task_id):
+def toggle_task(request, task_id):
     """
-    删除任务视图函数
+    切换任务完成状态。
 
-    作用:
-    1,根据task_id找到对应任务
-    2,删除这条任务
-    3,回到首页
+    如果任务从未完成变成完成：
+    - is_done 改为 True
+    - completed_at 记录当前完成时间
+
+    如果任务从完成恢复为未完成：
+    - is_done 改为 False
+    - completed_at 清空
     """
 
-    task = get_object_or_404(Task,id=task_id)
-    #暂时不去理解
+    task = get_object_or_404(Task, id=task_id)
 
-    task.delete()
-    #task执行删除
-    
+    # 如果当前任务还没完成
+    if not task.is_done:
+        task.is_done = True
+        task.completed_at = datetime.now()
+    else:
+        task.is_done = False
+        task.completed_at = None
+
+    task.save()
+
     return redirect("home")
-    #刷新home页面
 
