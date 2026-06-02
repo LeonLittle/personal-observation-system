@@ -99,6 +99,12 @@
             font-weight: 650;
         }
 
+        .action-total {
+            margin-top: 12px;
+            font-size: 14px;
+            color: #8b8376;
+        }
+
         .section-title {
             margin-top: 34px;
             margin-bottom: 14px;
@@ -299,8 +305,14 @@
             }
 
             .status-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
             }
+
+            .status-item {
+                padding: 14px;
+            }
+            
         }
     </style>
 </head>
@@ -317,45 +329,39 @@
         </header>
 
         <section class="hero-card">
-            <div class="card-label">今日观察</div>
+            <div class="card-label">今日行动</div>
 
             <p class="main-sentence">
-                今天不用完美，<br>
-                先真实地留下痕迹。
+                享受每一个时刻。
             </p>
 
             <div class="status-grid">
                 <div class="status-item">
-                    <div class="status-title">状态</div>
-                    <div class="status-value">
-                        {% if today_record.mood %}
-                            {{ today_record.mood }}
-                        {% else %}
-                            待记录
-                        {% endif %}
-                    </div>
+                    <div class="status-title">待完成</div>
+                    <div class="status-value">{{ undone_count }}</div>
                 </div>
 
                 <div class="status-item">
-                    <div class="status-title">完成</div>
-                    <div class="status-value">{{ done_count }} / {{ total_count}} </div>
+                    <div class="status-title">已完成</div>
+                    <div class="status-value">{{ done_count }}</div>
                 </div>
+            </div>
+
+            <div class="action-total">
+                今日共 {{ total_count }} 项行动
+
             </div>
         </section>
 
-        <a class="record-entry" href="{% url 'record' %}">
-            记录今日状态 →
-        </a>
+
 
         <section>
-            <h2 class="section-title">今日任务</h2>
+            <h2 class="section-title">接下来</h2>
 
-        {% if tasks %}
-            {% for task in tasks %}
-                <div class="task-card {% if task.is_done %}done{% endif %}">
-                    <a class="task-circle" href="{% url 'toggle_task' task.id %}">
-                        {% if task.is_done %}✓{% endif %}
-                    </a>
+        {% if next_tasks %}
+            {% for task in next_tasks %}
+                <div class="task-card">
+                    <a class="task-circle" href="{% url 'toggle_task' task.id %}"></a>
 
                     <div class="task-text">{{ task.title }}</div>
 
@@ -367,7 +373,7 @@
         {% else %}
             <div class="task-card">
                 <div class="task-circle"></div>
-                <div class="task-text">暂时还没有任务，先添加一条今天想观察的行动。</div>
+                <div class="task-text">今天暂时没有待完成任务，先保持真实就好。</div>
             </div>
         {% endif %}
 
@@ -375,7 +381,7 @@
             {% csrf_token %}
             <input type="hidden" name="form_type" value="task">
 
-            <input 
+            <!-- <input 
                 class="task-input"
                 type="text"
                 name="title"
@@ -385,8 +391,21 @@
 
             <button class="add-button" type="submit">
                 ＋ 添加
-            </button>
+            </button> -->
         </form>
+    </section>
+
+    <a class="record-entry" href="{% url 'task_list' %}">
+            今日行动 →
+    </a>
+
+    <a class="record-entry" href="{% url 'record' %}">
+            今日状态 →
+    </a>
+
+    <a class="record-entry" href="{% url 'history' %}">
+            每周观察 →
+    </a>
         </section>
 
         <p class="bottom-note">

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(255, 244, 214, 0.9), transparent 32%),
+                linear-gradient(135deg, #f7f3ea 0%, #eef3f7 100%);
+            color: #222;
+        }
+
+        .page {
+            width: 100%;
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 32px 20px 48px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 24px;
+            color: #7a756b;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .system-name {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            margin: 0;
+        }
+
+        .system-subtitle {
+            margin-top: 8px;
+            font-size: 14px;
+            color: #7a756b;
+        }
+
+        .date-row {
+            margin-top: 28px;
+            font-size: 20px;
+            font-weight: 600;
+            color: #2f2d29;
+        }
+
+        .summary-card {
+            margin-top: 22px;
+            padding: 20px;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.72);
+            box-shadow: 0 16px 45px rgba(80, 70, 50, 0.09);
+        }
+
+        .summary-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .summary-item {
+            flex: 1;
+            padding: 14px;
+            border-radius: 18px;
+            background: rgba(246, 242, 233, 0.75);
+        }
+
+        .summary-label {
+            font-size: 12px;
+            color: #8b8376;
+            margin-bottom: 6px;
+        }
+
+        .summary-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #33302b;
+        }
+
+        .add-form {
+            display: flex;
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .task-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            border-radius: 22px;
+            padding: 17px 18px;
+            font-size: 16px;
+            color: #33302b;
+            background: rgba(255, 255, 255, 0.76);
+            box-shadow: 0 12px 34px rgba(80, 70, 50, 0.08);
+        }
+
+        .task-input::placeholder {
+            color: #aaa196;
+        }
+
+        .add-button {
+            border: none;
+            border-radius: 22px;
+            padding: 17px 20px;
+            font-size: 16px;
+            font-weight: 650;
+            color: #3f372d;
+            background: rgba(255, 255, 255, 0.76);
+            box-shadow: 0 12px 34px rgba(80, 70, 50, 0.08);
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .section-title {
+            margin-top: 34px;
+            margin-bottom: 14px;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .task-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 18px;
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.68);
+            box-shadow: 0 10px 30px rgba(70, 70, 70, 0.06);
+            margin-bottom: 12px;
+        }
+
+        .task-card.done {
+            opacity: 0.62;
+        }
+
+        .task-card.done .task-text {
+            text-decoration: line-through;
+            color: #8b8376;
+        }
+
+        .task-circle {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid #b9afa0;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #6f665c;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .task-text {
+            flex: 1;
+            font-size: 16px;
+            color: #33302b;
+        }
+
+        .delete-link {
+            color: #b0a69a;
+            font-size: 14px;
+            text-decoration: none;
+            padding: 6px 8px;
+            border-radius: 12px;
+        }
+
+        .delete-link:hover {
+            color: #6f665c;
+            background: rgba(120, 110, 90, 0.08);
+        }
+
+        .empty-card {
+            padding: 18px;
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.68);
+            color: #7a756b;
+            line-height: 1.7;
+        }
+
+        .done-section {
+            margin-top: 22px;
+        }
+
+        details {
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.56);
+            padding: 16px;
+            box-shadow: 0 10px 30px rgba(70, 70, 70, 0.05);
+        }
+
+        summary {
+            cursor: pointer;
+            color: #6f665c;
+            font-weight: 650;
+        }
+
+        .done-list {
+            margin-top: 14px;
+        }
+
+        @media (max-width: 520px) {
+            .page {
+                padding: 26px 16px 40px;
+            }
+
+            .system-name {
+                font-size: 25px;
+            }
+
+            .summary-row {
+                flex-direction: column;
+            }
+
+            .add-form {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="page">
+        <a class="back-link" href="{% url 'home' %}">← 返回今日首页</a>
+
+        <header>
+            <h1 class="system-name">今日任务</h1>
+            <div class="system-subtitle">Personal Observation System</div>
+
+            <div class="date-row">
+                {{ date_text }} · {{ weekday_text }}
+            </div>
+        </header>
+
+        <section class="summary-card">
+            <div class="summary-row">
+                <div class="summary-item">
+                    <div class="summary-label">待完成</div>
+                    <div class="summary-value">{{ undone_count }}</div>
+                </div>
+
+                <div class="summary-item">
+                    <div class="summary-label">已完成</div>
+                    <div class="summary-value">{{ done_count }}</div>
+                </div>
+
+                <div class="summary-item">
+                    <div class="summary-label">总任务</div>
+                    <div class="summary-value">{{ total_count }}</div>
+                </div>
+            </div>
+        </section>
+
+        <form class="add-form" method="post">
+            {% csrf_token %}
+
+            <input
+                class="task-input"
+                type="text"
+                name="title"
+                placeholder="添加一个今天的行动"
+                autocomplete="off"
+            >
+
+            <button class="add-button" type="submit">
+                ＋ 添加
+            </button>
+        </form>
+
+        <section>
+            <h2 class="section-title">未完成</h2>
+
+            {% if undone_tasks %}
+                {% for task in undone_tasks %}
+                    <div class="task-card">
+                        <a class="task-circle" href="{% url 'toggle_task' task.id %}"></a>
+
+                        <div class="task-text">{{ task.title }}</div>
+
+                        <a class="delete-link" href="{% url 'delete_task' task.id %}">
+                            删除
+                        </a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-card">
+                    今天暂时没有未完成任务。<br>
+                    不一定要填满，先保持真实就好。
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="done-section">
+            <details>
+                <summary>已完成 {{ done_count }} 条，点击查看</summary>
+
+                <div class="done-list">
+                    {% if done_tasks %}
+                        {% for task in done_tasks %}
+                            <div class="task-card done">
+                                <a class="task-circle" href="{% url 'toggle_task' task.id %}">
+                                    ✓
+                                </a>
+
+                                <div class="task-text">{{ task.title }}</div>
+
+                                <a class="delete-link" href="{% url 'delete_task' task.id %}">
+                                    删除
+                                </a>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-card">
+                            还没有完成任务。完成一件小事后，它会出现在这里。
+                        </div>
+                    {% endif %}
+                </div>
+            </details>
+        </section>
+    </main>
+</body>
+</html>

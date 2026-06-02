@@ -59,23 +59,42 @@ def home(request):
 
 
 
+    # tasks = Task.objects.filter(
+    #     daily_record=today_record
+    # ).order_by("-created_at")
+    # #created_at是Task里创建时间字段
+    # #("-created_at")-倒序
+    # #.order_by() 按某个字段排序
+    # #daily_record=today_record 把这条任务绑定到今天这条日期上
+
+    # total_count = tasks.count()
+    # #.count()统计数量
+    # #.count()统计tasks里有多少数量 保存到total_count里
+
+    # done_count = tasks.filter(is_done=True).count()
+    # #.filter() 筛选
+    # #tasks.filter(is_done=True)筛选(is_done=True)的数据
+    # #筛选完后.count()统计数量
+    # #统计有多少已完成的任务 保存到done_count里
+    # 今天全部任务
+
     tasks = Task.objects.filter(
         daily_record=today_record
     ).order_by("-created_at")
-    #created_at是Task里创建时间字段
-    #("-created_at")-倒序
-    #.order_by() 按某个字段排序
-    #daily_record=today_record 把这条任务绑定到今天这条日期上
 
+    # 今天未完成任务
+    undone_tasks = tasks.filter(is_done=False)
+
+    # 今天已完成任务
+    done_tasks = tasks.filter(is_done=True)
+
+    # 首页只显示前 2 条未完成任务
+    next_tasks = undone_tasks[:2]
+
+    # 数量统计
+    undone_count = undone_tasks.count()
+    done_count = done_tasks.count()
     total_count = tasks.count()
-    #.count()统计数量
-    #.count()统计tasks里有多少数量 保存到total_count里
-
-    done_count = tasks.filter(is_done=True).count()
-    #.filter() 筛选
-    #tasks.filter(is_done=True)筛选(is_done=True)的数据
-    #筛选完后.count()统计数量
-    #统计有多少已完成的任务 保存到done_count里
 
     context = {
         #左边是html里使用的名字
@@ -86,14 +105,70 @@ def home(request):
         "title":"个人观察助手",
         "date_text" : today.strftime("%m月%d日"),
         "weekday_text":["星期一","星期二","星期三","星期四","星期五","星期六","星期日"][today.weekday()],
-        "tasks":tasks,
-        "total_count":total_count,
-        "done_count":done_count,
+        "tasks": tasks,
+        "next_tasks": next_tasks,
+        "undone_count": undone_count,
+        "done_count": done_count,
+        "total_count": total_count,
         "today_record":today_record,
     }
 
     return render(request,"observations/home.html",context)
     #把context的数据交给"observations/home.html" render生成到最终页面
+
+def task_list_view(request):
+    """
+    今日任务页视图函数
+
+    这个页面专门负责:
+    1.显示今天全部任务
+    2.区分未完成任务和已完成任务
+    3.添加新任务
+    """
+
+    today=datetime.now()
+
+    today_record,created = DailyRecord.objects.get_or_create(
+        date=today.date()
+    )
+
+    if request.method == "POST":
+        title = request.POST.get("title")
+
+        if title:
+            Task.objects.create(
+                title=title,
+                daily_record=today_record
+            )
+
+        return redirect("task_list")
+    
+    undone_tasks = Task.objects.filter(
+        daily_record=today_record,
+        is_done=False
+    ).order_by("-created_at")
+
+    done_tasks = Task.objects.filter(
+        daily_record=today_record,
+        is_done=True
+    ).order_by("-created_at")
+
+    undone_count =undone_tasks.count()
+    done_count = done_tasks.count()
+    total_count = undone_count+done_count
+
+    context = {
+        "title":"今日任务",
+        "date_text" : today.strftime("%m月%d日"),
+        "weekday_text":["星期一","星期二","星期三","星期四","星期五","星期六","星期日"][today.weekday()],
+        "today_record":today_record,
+        "undone_tasks":undone_tasks,
+        "done_tasks":done_tasks,
+        "undone_count":undone_count,
+        "done_count":done_count,
+        "total_count":total_count,
+    }
+    return render(request,"observations/tasks.html",context)
 
 def record_view(request):
     """
@@ -122,7 +197,7 @@ def record_view(request):
         else:
             today_record.energy = None
 
-        today.record.save()
+        today_record.save()
         #保存
 
         return redirect("home")
@@ -136,6 +211,40 @@ def record_view(request):
     }
     
     return render(request,"observations/record.html",context)
+
+def history_view(request):
+    """
+    最近观察视图函数
+
+    作用:
+    1.读取最近7天的DailyRecord 状态还是任务?
+    2.计算每一天的任务完成数量 
+    3.把整理好的历史数据交给history.html显示
+    """
+
+    records = DailyRecord.objects.all().order_by("-date")[:7]
+
+    history_items = []
+
+    for record in records:
+        tasks=record.tasks.all()
+
+        total_count= tasks.count()
+
+        done_count = tasks.filter(is_done=True).count()
+
+        history_items.append({
+            "record":record,
+            "total_count":total_count,
+            "done_count":done_count,
+        })
+
+    context={
+        "title":"最近观察",
+        "history_items":history_items,
+    }
+
+    return render(request,"observations/history.html",context)
 
 def toggle_task(request,task_id):
     """
