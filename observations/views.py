@@ -6,7 +6,9 @@ from .models import Task,DailyRecord
 #3. get_object_or_404作用:代码安全维护  意思:去数据库找某条数据;找不到就显示404错误页
 #4. from datetime import datetime是在python里的datetime时间管理模块 导入datetime日期+时间工具
 #5. shortcuts是django快捷工具箱
+from django.contrib.auth.decorators import login_required
 
+@login_required
 def home(request):
     """ 首页视图函数。
 
@@ -116,6 +118,7 @@ def home(request):
     return render(request,"observations/home.html",context)
     #把context的数据交给"observations/home.html" render生成到最终页面
 
+@login_required
 def task_list_view(request):
     """
     今日任务页视图函数
@@ -170,6 +173,7 @@ def task_list_view(request):
     }
     return render(request,"observations/tasks.html",context)
 
+@login_required
 def record_view(request):
     """
     今日状态页视图函数。
@@ -212,6 +216,7 @@ def record_view(request):
     
     return render(request,"observations/record.html",context)
 
+@login_required
 def history_view(request):
     """
     最近观察视图函数
@@ -246,6 +251,7 @@ def history_view(request):
 
     return render(request,"observations/history.html",context)
 
+@login_required
 def toggle_task(request,task_id):
     """
     toggle切换 任务完成状态
@@ -271,6 +277,7 @@ def toggle_task(request,task_id):
     return redirect("home")
     #刷新home页面
 
+@login_required
 def delete_task(request,task_id):
     """
     删除任务视图函数

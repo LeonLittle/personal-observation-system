@@ -120,3 +120,12 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# 登录页面地址
+LOGIN_URL = "login"
+
+# 登录成功后跳转地址
+LOGIN_REDIRECT_URL = "home"
+
+# 退出登录后跳转地址
+LOGOUT_REDIRECT_URL = "login"
