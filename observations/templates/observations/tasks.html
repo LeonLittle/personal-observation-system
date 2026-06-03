@@ -186,6 +186,11 @@
             margin-bottom: 12px;
         }
 
+        .focus-card {
+            background: rgba(246, 242, 233, 0.92);
+            border: 1px solid rgba(180, 165, 140, 0.22);
+        }
+
         .task-card.done {
             opacity: 0.62;
         }
@@ -214,6 +219,15 @@
             flex: 1;
             font-size: 16px;
             color: #33302b;
+        }
+
+        .task-title-link {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .focus-card .task-title-link {
+            font-weight: 700;
         }
 
         .task-time {
@@ -382,10 +396,14 @@
 
             {% if undone_tasks %}
                 {% for task in undone_tasks %}
-                    <div class="task-card">
-                        <a class="task-circle" href="{% url 'toggle_task' task.id %}"></a>
+                    <div class="task-card {% if task.show_on_home %} focus-card{% endif %}">
+                        <a class="task-circle" href="{% url 'toggle_task' task.id %}?next=task_list"></a>
 
-                        <div class="task-text">{{ task.title }}</div>
+                        <div class="task-text">
+                            <a class="task-title-link" href="{% url 'toggle_home_focus' task.id %}">
+                                {{ task.title }}
+                            </a>
+                        </div>
 
                         {% if task.planned_start and task.planned_end %}
                             <div class="task-time">
@@ -418,7 +436,7 @@
                     {% if done_tasks %}
                         {% for task in done_tasks %}
                             <div class="task-card done">
-                                <a class="task-circle" href="{% url 'toggle_task' task.id %}">
+                                <a class="task-circle" href="{% url 'toggle_task' task.id %}?next=task_list">
                                     ✓
                                 </a>
 

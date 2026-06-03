@@ -106,6 +106,68 @@
             font-size: 14px;
         }
 
+        .task-details {
+            cursor: pointer;
+        }
+
+        .task-details summary {
+            list-style: none;
+            cursor: pointer;
+        }
+
+        .task-details summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .task-details[open] {
+            grid-column: 1 / -1;
+        }
+
+        .history-task-list {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(120, 110, 90, 0.14);
+        }
+
+        .history-task-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 0;
+            color: #4a443d;
+            font-size: 14px;
+        }
+
+        .history-task-row.done {
+            color: #9a9186;
+        }
+
+        .history-task-row.done .history-task-title {
+            text-decoration: line-through;
+        }
+
+        .history-task-mark {
+            width: 20px;
+            flex-shrink: 0;
+            color: #8b8376;
+        }
+
+        .history-task-title {
+            flex: 1;
+        }
+
+        .history-task-time {
+            color: #9a9186;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .history-task-empty {
+            padding: 10px 0;
+            color: #8b8376;
+            font-size: 14px;
+        }
+
         .empty-card {
             padding: 24px;
             border-radius: 26px;
@@ -177,13 +239,52 @@
                             </div>
                         </div>
 
-                        <div class="info-item">
+                    <details class="info-item task-details">
+                        <summary>
                             <div class="info-label">任务</div>
                             <div class="info-value">
                                 {{ item.done_count }} / {{ item.total_count }}
                             </div>
+                        </summary>
+
+                        <div class="history-task-list">
+                            {% if item.tasks %}
+                                {% for task in item.tasks %}
+                                    <div class="history-task-row {% if task.is_done %}done{% endif %}">
+                                        <span class="history-task-mark">
+                                            {% if task.is_done %}
+                                                ✓
+                                            {% else %}
+                                                ○
+                                            {% endif %}
+                                        </span>
+
+                                        <span class="history-task-title">
+                                            {{ task.title }}
+                                        </span>
+
+                                        {% if task.completed_at %}
+                                            <span class="history-task-time">
+                                                {{ task.completed_at|date:"H:i" }}完成
+                                            </span>
+                                        {% elif task.planned_start and task.planned_end %}
+                                            <span class="history-task-time">
+                                                {{ task.planned_start|time:"H:i" }}-{{ task.planned_end|time:"H:i" }}
+                                            </span>
+                                        {% elif task.planned_start %}
+                                            <span class="history-task-time">
+                                                {{ task.planned_start|time:"H:i" }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="history-task-empty">
+                                    这一天没有记录任务。
+                                </div>
+                            {% endif %}
                         </div>
-                    </div>
+                    </details>
 
                     <div class="summary">
                         {% if item.record.summary %}

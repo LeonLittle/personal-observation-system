@@ -366,7 +366,7 @@
 
 
         <section>
-            <h2 class="section-title">接下来</h2>
+            <h2 class="section-title">重点关注</h2>
 
         {% if next_tasks %}
             {% for task in next_tasks %}
@@ -385,15 +385,12 @@
                         </div>
                     {% endif %}
 
-                    <a class="delete-link" href="{% url 'delete_task' task.id %}">
-                        删除
-                    </a>
                 </div>
             {% endfor %}
         {% else %}
             <div class="task-card">
                 <div class="task-circle"></div>
-                <div class="task-text">今天暂时没有待完成任务，先保持真实就好。</div>
+                <div class="task-text">今天还没有选择重点关注。</div>
             </div>
         {% endif %}
 
@@ -401,17 +398,6 @@
             {% csrf_token %}
             <input type="hidden" name="form_type" value="task">
 
-            <!-- <input 
-                class="task-input"
-                type="text"
-                name="title"
-                placeholder="添加一个专属时刻"
-                autocomplete="off"
-            >
-
-            <button class="add-button" type="submit">
-                ＋ 添加
-            </button> -->
         </form>
     </section>
 

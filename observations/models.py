@@ -114,6 +114,11 @@ class Task(models.Model):
     )
     #BooleanField布尔字段 只有True/False这两种状态  default=False默认是空,手动完成
 
+    show_on_home = models.BooleanField(
+        default=False,
+        verbose_name="是否在首页重点关注"
+    )
+
     planned_start = models.TimeField(
         null=True,
         blank=True,

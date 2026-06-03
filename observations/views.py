@@ -93,7 +93,9 @@ def home(request):
     done_tasks = tasks.filter(is_done=True)
 
     # 首页只显示前 2 条未完成任务
-    next_tasks = undone_tasks[:2]
+    next_tasks = undone_tasks.filter(
+        show_on_home=True
+    )
 
     # 数量统计
     undone_count = undone_tasks.count()
@@ -245,17 +247,18 @@ def history_view(request):
     history_items = []
 
     for record in records:
-        tasks=record.tasks.all()
+        tasks=record.tasks.all().order_by("-created_at")
 
         total_count= tasks.count()
 
         done_count = tasks.filter(is_done=True).count()
 
-        history_items.append({
-            "record":record,
-            "total_count":total_count,
-            "done_count":done_count,
-        })
+    history_items.append({
+        "record": record,
+        "tasks": tasks,
+        "total_count": total_count,
+        "done_count": done_count,
+    })
 
     context={
         "title":"最近观察",
@@ -269,39 +272,35 @@ def delete_task(request, task_id):
     """
     删除任务视图函数。
 
-    作用：
-    1. 根据 task_id 找到对应任务
-    2. 删除这条任务
-    3. 删除后回到首页
+    当前规则：
+    1. 删除任务只属于“今日任务页”的管理行为
+    2. 删除完成后返回今日任务页
+    3. 首页不再承担删除任务功能
     """
 
-    # 根据任务 id 从数据库里找到这条任务
-    # 如果找不到，就返回 404 页面，避免程序报错
+    # 根据任务 id 找到对应任务
+    # 如果找不到，就返回 404，避免程序直接报错
     task = get_object_or_404(Task, id=task_id)
 
     # 删除这条任务
     task.delete()
 
-    # 删除完成后，回到首页
-    return redirect("home")
+    # 删除后回到今日任务页，而不是首页
+    return redirect("task_list")
 
 @login_required
 def toggle_task(request, task_id):
     """
     切换任务完成状态。
 
-    如果任务从未完成变成完成：
-    - is_done 改为 True
-    - completed_at 记录当前完成时间
-
-    如果任务从完成恢复为未完成：
-    - is_done 改为 False
-    - completed_at 清空
+    当前规则：
+    1. 如果任务未完成，点击后变成完成，并记录完成时间
+    2. 如果任务已完成，点击后恢复未完成，并清空完成时间
+    3. 根据 next 参数决定操作完成后回到哪个页面
     """
 
     task = get_object_or_404(Task, id=task_id)
 
-    # 如果当前任务还没完成
     if not task.is_done:
         task.is_done = True
         task.completed_at = timezone.now()
@@ -311,5 +310,34 @@ def toggle_task(request, task_id):
 
     task.save()
 
+    next_page = request.GET.get("next")
+
+    if next_page == "task_list":
+        return redirect("task_list")
+
     return redirect("home")
 
+def toggle_home_focus(request, task_id):
+    """
+    切换任务是否作为首页重点关注。
+
+    作用：
+    1. 根据 task_id 找到对应任务
+    2. 如果它现在不是重点关注，就设为重点关注
+    3. 如果它现在已经是重点关注，就取消重点关注
+    4. 操作完成后回到今日任务页
+    """
+
+    # 根据任务 id 找到这条任务
+    # 如果找不到，就返回 404 页面，避免程序直接报错
+    task = get_object_or_404(Task, id=task_id)
+
+    # True 变 False，False 变 True
+    # 也就是：点击一次选中，再点击一次取消
+    task.show_on_home = not task.show_on_home
+
+    # 保存修改
+    task.save()
+
+    # 回到今日任务页
+    return redirect("task_list")

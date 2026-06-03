@@ -9,6 +9,7 @@ urlpatterns = [
     path("record/",views.record_view,name="record"),
     path("history/",views.history_view,name="history"),
     path("tasks/<int:task_id>/complete/",views.toggle_task,name="toggle_task"),
+    path("tasks/<int:task_id>/focus/", views.toggle_home_focus, name="toggle_home_focus"),
     path("tasks/<int:task_id>/dalete/",views.delete_task,name="delete_task"),
     
 ]
