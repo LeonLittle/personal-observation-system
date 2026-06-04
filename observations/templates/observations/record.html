@@ -116,25 +116,26 @@
         }
 
         .top-nav {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    margin: 24px 0 28px;
-    padding: 8px;
-    border-radius: 22px;
-    background: rgba(255, 255, 255, 0.52);
-    box-shadow: 0 12px 34px rgba(80, 70, 50, 0.07);
-}
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            margin: 14px 0 16px;
+            padding: 6px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.58);
+            box-shadow: 0 10px 26px rgba(80, 70, 50, 0.06);
+        }
 
         .top-nav a {
             display: block;
-            padding: 11px 8px;
-            border-radius: 16px;
+            padding: 9px 4px;
+            border-radius: 14px;
             color: #7a756b;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 650;
             text-align: center;
             text-decoration: none;
+            white-space: nowrap;
         }
 
         .top-nav a.active {
@@ -159,14 +160,17 @@
             }
 
             .top-nav {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 8px;
-                margin: 20px 0 24px;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 5px;
+                margin: 12px 0 14px;
+                padding: 5px;
+                border-radius: 16px;
             }
 
             .top-nav a {
-                padding: 10px 8px;
-                font-size: 13px;
+                padding: 8px 2px;
+                font-size: 12px;
+                border-radius: 12px;
             }
 
         }
@@ -178,6 +182,10 @@
 
         <header>
             <h1 class="system-name">今日状态记录</h1>
+            <div class="system-subtitle">Have a nice day</div>
+            <!-- <div class="date-row">
+                {{ date_text }} · {{ weekday_text }}
+            </div> -->
 
             <nav class="top-nav">
                 <a href="{% url 'home' %}">首页</a>
@@ -186,11 +194,9 @@
                 <a href="{% url 'history' %}">观察</a>
             </nav>
 
-            <div class="system-subtitle">Personal Observation System</div>
+            
 
-            <div class="date-row">
-                {{ date_text }} · {{ weekday_text }}
-            </div>
+
         </header>
 
         <section class="record-card">
