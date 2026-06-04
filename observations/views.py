@@ -253,12 +253,12 @@ def history_view(request):
 
         done_count = tasks.filter(is_done=True).count()
 
-    history_items.append({
-        "record": record,
-        "tasks": tasks,
-        "total_count": total_count,
-        "done_count": done_count,
-    })
+        history_items.append({
+            "record": record,
+            "tasks": tasks,
+            "total_count": total_count,
+            "done_count": done_count,
+        })
 
     context={
         "title":"最近观察",
