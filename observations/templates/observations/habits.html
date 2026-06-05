@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>习惯</title>
+
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: #f7f1e8;
+            color: #2f2d29;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        .page {
+            width: min(680px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 32px 0 48px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            margin: 0;
+            font-size: 30px;
+            font-weight: 750;
+            letter-spacing: 1px;
+        }
+
+        .page-subtitle {
+            margin: 10px 0 0;
+            color: #8b8173;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .top-nav {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            margin: 18px 0 0;
+            padding: 6px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.58);
+            box-shadow: 0 10px 26px rgba(80, 70, 50, 0.06);
+        }
+
+        .top-nav a {
+            display: block;
+            padding: 9px 4px;
+            border-radius: 14px;
+            color: #7a756b;
+            font-size: 13px;
+            font-weight: 650;
+            text-align: center;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .top-nav a.active {
+            color: #3f372d;
+            background: rgba(246, 242, 233, 0.92);
+        }
+
+        .card {
+            margin-top: 18px;
+            padding: 20px;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.72);
+            box-shadow: 0 14px 36px rgba(80, 70, 50, 0.08);
+        }
+
+        .section-title {
+            margin: 0 0 14px;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .habit-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .habit-input {
+            flex: 1;
+            min-width: 0;
+            padding: 12px 14px;
+            border: 1px solid rgba(120, 110, 95, 0.18);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.88);
+            color: #2f2d29;
+            font-size: 15px;
+            outline: none;
+        }
+
+        .habit-input:focus {
+            border-color: rgba(120, 100, 70, 0.42);
+        }
+
+        .add-button {
+            padding: 0 18px;
+            border: none;
+            border-radius: 16px;
+            background: #3f372d;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 650;
+            cursor: pointer;
+        }
+
+        .habit-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .habit-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 13px 14px;
+            border-radius: 18px;
+            background: rgba(250, 247, 240, 0.88);
+        }
+
+        .habit-title {
+            color: #3f372d;
+            font-size: 15px;
+            font-weight: 650;
+        }
+
+        .habit-title a {
+            color: #3f372d;
+            text-decoration: none;
+        }
+
+        .habit-title a:hover {
+            text-decoration: underline;
+        }
+
+        .delete-link {
+            color: #9a5b4f;
+            font-size: 13px;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .delete-link:hover {
+            text-decoration: underline;
+        }
+
+        .habit-days {
+            flex-shrink: 0;
+            color: #8b8173;
+            font-size: 13px;
+        }
+
+        .empty-text {
+            margin: 0;
+            color: #9a9186;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        @media (max-width: 520px) {
+            .page {
+                width: min(100% - 24px, 680px);
+                padding-top: 24px;
+            }
+
+            .page-title {
+                font-size: 26px;
+            }
+
+            .top-nav {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 4px;
+                padding: 5px;
+                border-radius: 16px;
+            }
+
+            .top-nav a {
+                padding: 8px 1px;
+                font-size: 12px;
+                border-radius: 12px;
+            }
+
+            .habit-form {
+                display: grid;
+                gap: 10px;
+            }
+
+            .add-button {
+                padding: 12px 18px;
+            }
+
+            .habit-item {
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="page">
+        <header class="header">
+            <h1 class="page-title">习惯</h1>
+            <p class="page-subtitle">让重复发生的事，慢慢变成你的生活结构。</p>
+
+            <nav class="top-nav">
+                <a href="{% url 'home' %}">首页</a>
+                <a href="{% url 'task_list' %}">行动</a>
+                <a href="{% url 'record' %}">状态</a>
+                <a class="active" href="{% url 'habits' %}">习惯</a>
+                <a href="{% url 'history' %}">观察</a>
+            </nav>
+        </header>
+
+        <section class="card">
+            <h2 class="section-title">添加一个习惯</h2>
+
+            <form class="habit-form" method="post">
+                {% csrf_token %}
+                <input
+                    class="habit-input"
+                    type="text"
+                    name="title"
+                    placeholder="例如：早上学习 Python"
+                    autocomplete="off"
+                >
+                <button class="add-button" type="submit">添加</button>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2 class="section-title">启用中</h2>
+
+            <div class="habit-list">
+                {% for item in active_habit_items %}
+                    <div class="habit-item">
+                        <div class="habit-title">
+                            ○
+                            <a href="{% url 'pause_habit' item.habit.id %}">
+                                {{ item.habit.title }}
+                            </a>
+                        </div>
+                        <div class="habit-days">已启用 {{ item.active_days }} 天</div>
+                    </div>
+                {% empty %}
+                    <p class="empty-text">还没有启用中的习惯。可以先添加一个最想稳定下来的行动。</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="card">
+            <h2 class="section-title">已暂停</h2>
+
+            <div class="habit-list">
+                {% for habit in paused_habits %}
+                    <div class="habit-item">
+                        <div class="habit-title">
+                            ○
+                            <a href="{% url 'resume_habit' habit.id %}">
+                                {{ habit.title }}
+                            </a>
+                        </div>
+
+                        <a class="delete-link" href="{% url 'delete_habit' habit.id %}">
+                            删除
+                        </a>
+                    </div>
+                {% empty %}
+                    <p class="empty-text">暂无已暂停的习惯。</p>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+</body>
+</html>

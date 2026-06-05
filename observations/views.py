@@ -1,7 +1,7 @@
 from django.shortcuts import render,redirect,get_object_or_404
 from django.utils import timezone
 from datetime import datetime
-from .models import Task,DailyRecord
+from .models import Task,DailyRecord,Habit,HabitPeriod
 #1. render作用:把数据交给HTML页面,然后生成网页返回给浏览器 意思:生成网页
 #2. redirect作用:跳转到另一个页面  意思:保存完任务后,重新回到首页 
 #3. get_object_or_404作用:代码安全维护  意思:去数据库找某条数据;找不到就显示404错误页
@@ -268,6 +268,98 @@ def history_view(request):
     return render(request,"observations/history.html",context)
 
 @login_required
+def habits_view(request):
+    """
+    习惯页面视图函数
+
+    这个页面目前只做3件事:
+    1.添加一个新的习惯
+    2.显示当前启用中的习惯
+    3.显示已经暂停的习惯
+    """
+
+    today = datetime.now().date()
+    #获取今天的日期
+    #这里使用date(),只要年月日,不要具体时分秒
+
+    if request.method == "POST":
+        #如果用户提交了表单,说明用户想新增一个习惯.
+
+        title = request.POST.get("title")
+        #从表单里拿到用户输入的习惯标题
+
+        if title:
+            #如果用户确实输入了内容,才创建习惯
+
+            habit = Habit.objects.create(
+                user=request.user,
+                title=title,
+                is_active=True
+            )
+            #创建Habit,
+            #user=request.user表示这个习惯属于当前登录用户
+            # title=title 表示习惯名称
+            # is_active=True 表示新建后默认启用
+
+            HabitPeriod.objects.create(
+                habit=habit,
+                start_date=today
+            )
+            #创建HabitPeriod,
+            # 每新增一个启用中的习惯，就同步创建一段“持续周期”
+            #start_date=today 表示这个习惯从今天开始持续
+            # end_date 默认是空，表示还在持续中
+
+        return redirect("habits")
+        # 添加完成后，重新回到习惯页面。
+
+    active_habits = Habit.objects.filter(
+        #查询当前用户已经启用的习惯
+        user=request.user,
+        is_active=True
+    ).order_by("-created_at")
+
+    paused_habits = Habit.objects.filter(
+        #查询当前用户已经暂停的习惯
+        user=request.user,
+        is_active=False
+    ).order_by("-created_at")
+
+
+    active_habit_items = []
+    # 这里专门整理启用中的习惯数据。
+    # 因为页面要显示“已持续多少天”，所以不能只把 habit 原样传过去。
+
+    for habit in active_habits:
+        #找到这个习惯当前正在持续的周期
+        #end_date为空,表示这一段还没结束
+        current_period = habit.periods.filter(
+            end_date__isnull = True
+        ).order_by("-start_date").first()
+
+        if current_period:
+            #持续天数 = 今天 - 开始日期 + 1
+            # +1 是为了让今天刚创建的习惯显示为"已持续1天"
+            active_days = (today - current_period.start_date).days +1
+        else:
+            active_days = 1
+            #理论上每个启用中的习惯都应该有一个未结束周期,
+            #这里写 1 是为了防止旧数据异常导致页面报错.
+
+        active_habit_items.append({
+            "habit": habit,
+            "active_days":active_days,
+        })
+
+    context={
+        "title":"习惯",
+        "active_habit_items":active_habit_items,
+        "paused_habits":paused_habits,
+    }
+    
+    return render(request,"observations/habits.html",context)
+
+@login_required
 def delete_task(request, task_id):
     """
     删除任务视图函数。
@@ -287,6 +379,119 @@ def delete_task(request, task_id):
 
     # 删除后回到今日任务页，而不是首页
     return redirect("task_list")
+
+@login_required
+def pause_habit(request,habit_id):
+    """
+    暂停习惯
+
+    触发方式:
+    用户在"启用中"区域点击习惯文字.
+
+    做两件事
+    1.把Habit.is_active改成False
+    2.把当前正在持续的HAbitperiod结束日期设为今天
+
+    注意:
+    这里只允许操作当前登录用户自己的习惯
+    """
+
+    today = datetime.now().date()
+
+    habit = Habit.objects.get(
+        id=habit_id,
+        user = request.user
+    )
+    #根据habit_id找到习惯
+    #user = request.user 是为了保证用户只能操作自己的习惯
+
+    habit.is_active = False
+    #把习惯改成已暂停
+    habit.save()
+    #保存
+
+    current_period = habit.periods.filter(
+        end_date__isnull = True
+    ).order_by("-start_date").first()
+    #找到这个习惯当前还没有结束的持续周期
+
+    if current_period:
+        current_period.end_date = today
+        current_period.save()
+        # 把当前持续周期的结束日期设置为今天
+        #为什么有些地方需要用到保存 有些地方不用特意这样.save去保存
+
+    return redirect("habits")
+
+@login_required
+def resume_habit(request,habit_id):
+    """
+    恢复习惯
+
+    触发方式:
+    用户在"已暂停"区域点击习惯文字.
+
+    做两件事:
+    1.把Habit.is_active改成True
+    2.新建一条HabitPeriod
+    """
+
+    today = datetime.now().date()
+
+    habit = Habit.objects.get(
+        id=habit_id,
+        user=request.user
+    )
+    # 只允许恢复当前登录用户自己的习惯
+
+    habit.is_active=True
+    habit.save()
+    #把习惯改回启用中
+
+    has_open_period = habit.periods.filter(
+        end_date__isnull = True
+    ).exists()
+    #检查是否已经存在一条未结束的周期
+    #正常情况下,已暂停的习惯不应该有未结束周期
+    #这里做检查,是为了防止重复创建
+
+    if not has_open_period:
+        HabitPeriod.objects.create(
+            habit=habit,
+            start_date=today
+        )
+        #新建一段新的持续周期
+        #end_date 默认为空，表示正在持续中
+
+    return redirect("habits")
+
+@login_required
+def delete_habit(request,habit_id):
+    """
+    删除习惯
+
+    触发方式:
+    用户在"已暂停"区域点击删除
+
+    当前规则:
+    只允许删除已暂停的习惯
+    启用中的习惯不能直接删除,必须先暂停再删除.
+    """
+
+    habit= Habit.objects.get(
+        id=habit_id,
+        user=request.user,
+        is_active=False
+    )
+    #只允许删除当前登录用户自己的,并且已经暂停的习惯
+
+    habit.delete()
+    #删除Habit后,相关的HabitPeriod会因为on_delete=models.CASCADE一起删除
+
+    return redirect("habits")
+
+
+
 
 @login_required
 def toggle_task(request, task_id):

@@ -303,7 +303,7 @@
 
         .top-nav {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             gap: 6px;
             margin: 16px 0 18px;
             padding: 6px;
@@ -368,7 +368,7 @@
             }
 
             .top-nav {
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             gap: 5px;
             margin: 12px 0 14px;
             padding: 5px;
@@ -390,7 +390,7 @@
     <main class="page">
         <header class="header">
             <h1 class="system-name">个人观察助手</h1>
-            <div class="system-subtitle">Personal Observation System</div>
+            <div class="system-subtitle">Personal Observation Assistant</div>
             <div class="date-row">
                     {{ date_text }} · {{ weekday_text }}
             </div>
@@ -398,6 +398,7 @@
                 <a class="active" href="{% url 'home' %}">首页</a>
                 <a href="{% url 'task_list' %}">行动</a>
                 <a href="{% url 'record' %}">状态</a>
+                <a href="{% url 'habits' %}">习惯</a>
                 <a href="{% url 'history' %}">观察</a>
             </nav>
 

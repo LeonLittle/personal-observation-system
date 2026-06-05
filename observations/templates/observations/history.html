@@ -172,7 +172,7 @@
 
         .top-nav {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             gap: 6px;
             margin: 14px 0 16px;
             padding: 6px;
@@ -218,7 +218,7 @@
             }
 
             .top-nav {
-                grid-template-columns: repeat(4, 1fr);
+                grid-template-columns: repeat(5, 1fr);
                 gap: 5px;
                 margin: 12px 0 14px;
                 padding: 5px;
@@ -239,12 +239,13 @@
     <main class="page">
 
         <header>
-            <h1 class="system-name">最近7天观察</h1>
+            <h1 class="system-name">每周观察</h1>
             <div class="system-subtitle">Have a nice day</div>
             <nav class="top-nav">
                 <a href="{% url 'home' %}">首页</a>
                 <a href="{% url 'task_list' %}">行动</a>
                 <a href="{% url 'record' %}">状态</a>
+                <a href="{% url 'habits' %}">习惯</a>
                 <a class="active" href="{% url 'history' %}">观察</a>
             </nav>
 

@@ -148,3 +148,117 @@ class Task(models.Model):
         直接显示title任务标题,方便我们识别,不然django默认显示Task object (1)。
         """
         return self.title
+    
+class Habit(models.Model):
+    """
+    Habit 代表一个长期重复的习惯
+
+    这里的Habit不是今天的一条任务,
+    而是一个长期存在的"习惯模版"
+    
+    例如:
+    1.早上学习python
+    2.晚上英语练习
+    3.运动30分钟
+
+    Habit本身不直接代表某一天有没有完成.
+    它后续会每天生成一条Task到今日行动里.
+
+    """
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name="所属用户"
+    )
+    #每个习惯都必须属于一个用户
+    #这样不同用户之间的习惯不会混在一起
+    #on_delete=models.CASCADE 便是用户被删除时,这个用户的习惯也一起删除
+
+    title = models.CharField(
+        max_length=100,
+        verbose_name="习惯标题"
+    )
+    #习惯名称
+    #例如:早上学习python/晚上英语练习/运动30分钟
+
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="是否启用"
+    )
+    #True表示启用中
+    #Flase表示已暂停
+
+    default_focus = models.BooleanField(
+        default=False,
+        verbose_name="是否默认重点关注"
+    )
+    #后续习惯生在今日行动时,是否默认显示到首页终点关注
+    #当前先保留这个字段,第一版页面暂时不做开关
+    #默认False,避免首页被自动塞满
+
+    created_at = models.DateTimeField(
+        auto_now_add = True,
+        verbose_name = "创建时间"
+    )
+    #记录这个习惯第一次创建的时间
+
+    def __str__(self):
+        """
+        在Django后台或调试时,
+        直接显示习惯标题,方便识别
+        """
+        return self.title
+    
+
+class HabitPeriod(models.Model):
+    """
+    HabitPeriod代表一个习惯的启用周期
+
+    为什么需要这个模型?
+
+    因为一个习惯可能经历:
+    启用 -> 暂停 -> 恢复 -> 再暂停
+
+    HabitPeriod就是用来保存这些历史周期的.
+    后续ai分析时,可以知道用户什么时候持续了,
+    什么时候暂停了,什么时候又恢复了.
+    
+    """
+
+    habit = models.ForeignKey(
+        Habit,
+        on_delete = models.CASCADE,
+        related_name="periods",
+        verbose_name = "所属习惯"
+    )
+    #每一段周期都属于一个Habit
+    #related_name="periods" 表示以后可以通过habit.periods 找到这个习惯的所有周期
+
+    start_date  = models.DateField(
+        default = date.today,
+        verbose_name="开始日期"
+    )
+    #这一段习惯用哪一天开始启用
+
+    end_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="结束日期"
+    )
+    #这一段习惯在哪一天结束
+    #null=True/blank=Truue 表示可以为空
+    #如果end_date为空,说明这一段习惯还在持续中
+
+    created_at = models.DateTimeField(
+        auto_now_add = True,
+        verbose_name = "创建时间"
+    )
+    #记录这条周期数据第一次创建的时间
+
+    def __str__(self):
+            """
+            在 Django 后台或调试时,
+            显示这个周期属于哪个习惯。
+            """
+            return f"{self.habit.title}:{self.start_date} - {self.end_date or '持续中'}"
