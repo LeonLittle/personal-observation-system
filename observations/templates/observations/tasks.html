@@ -474,9 +474,9 @@
                             </div>
                         {% endif %}
 
-                        <a class="delete-link" href="{% url 'delete_task' task.id %}">
-                            删除
-                        </a>
+                        {% if not task.source_habit %}
+                            <a class="delete-link" href="{% url 'delete_task' task.id %}">删除</a>
+                        {% endif %}
                     </div>
                 {% endfor %}
             {% else %}
@@ -517,9 +517,9 @@
                                     </div>
                                 {% endif %}
 
-                                <a class="delete-link" href="{% url 'delete_task' task.id %}">
-                                    删除
-                                </a>
+                                {% if not task.source_habit %}
+                                    <a class="delete-link" href="{% url 'delete_task' task.id %}">删除</a>
+                                {% endif %}
                             </div>
                         {% endfor %}
                     {% else %}

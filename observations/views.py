@@ -140,6 +140,49 @@ def task_list_view(request):
         date=today.date()
     )
 
+        # 读取当前用户所有启用中的习惯。
+    # 这些习惯会自动生成到今天的“今日行动”里。
+    active_habits = Habit.objects.filter(
+        user=request.user,
+        is_active=True
+    )
+
+    for habit in active_habits:
+        # 先检查今天是否已经有这条习惯生成过的 Task。
+        # 如果已经存在，就不再重复生成。
+        has_generated_task = Task.objects.filter(
+            daily_record=today_record,
+            source_habit=habit
+        ).exists()
+
+        if has_generated_task:
+            continue
+
+        # 如果用户今天已经手动添加过一个同名任务，
+        # 就把这条手动任务和习惯关联起来，避免重复出现两条一样的行动。
+        same_title_task = Task.objects.filter(
+            daily_record=today_record,
+            title=habit.title,
+            source_habit__isnull=True
+        ).first()
+
+        if same_title_task:
+            same_title_task.source_habit = habit
+            same_title_task.save()
+            continue
+
+        # 如果今天还没有这条习惯对应的 Task，
+        # 就自动创建一条新的今日行动。
+        Task.objects.create(
+            title=habit.title,
+            daily_record=today_record,
+            source_habit=habit,
+            show_on_home=habit.default_focus
+        )
+
+
+
+
     if request.method == "POST":
         title = request.POST.get("title")
 
@@ -421,6 +464,17 @@ def pause_habit(request,habit_id):
         # 把当前持续周期的结束日期设置为今天
         #为什么有些地方需要用到保存 有些地方不用特意这样.save去保存
 
+        today_record = DailyRecord.objects.filter(
+        user=request.user,
+        date=today
+    ).first()
+
+    if today_record:
+        Task.objects.filter(
+            daily_record=today_record,
+            source_habit=habit
+        ).delete()
+
     return redirect("habits")
 
 @login_required
@@ -478,6 +532,9 @@ def delete_habit(request,habit_id):
     启用中的习惯不能直接删除,必须先暂停再删除.
     """
 
+    
+
+
     habit= Habit.objects.get(
         id=habit_id,
         user=request.user,
@@ -485,8 +542,24 @@ def delete_habit(request,habit_id):
     )
     #只允许删除当前登录用户自己的,并且已经暂停的习惯
 
+    today = datetime.now().date()
+
+    today_record = DailyRecord.objects.filter(
+        user=request.user,
+        date=today
+    ).first()
+
+    if today_record:
+        Task.objects.filter(
+            daily_record=today_record,
+            source_habit=habit
+        ).delete()
+
+
     habit.delete()
     #删除Habit后,相关的HabitPeriod会因为on_delete=models.CASCADE一起删除
+
+    
 
     return redirect("habits")
 

@@ -114,10 +114,35 @@ class Task(models.Model):
     )
     #BooleanField布尔字段 只有True/False这两种状态  default=False默认是空,手动完成
 
+    
+
     show_on_home = models.BooleanField(
         default=False,
         verbose_name="是否在首页重点关注"
     )
+
+    source_habit = models.ForeignKey(
+        "Habit",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="generated_tasks",
+        verbose_name="来源习惯"
+    )
+    # source_habit 用来记录这条 Task 是不是由某个习惯生成的
+    #
+    # 例如：
+    # 习惯：早上学习 Python
+    # 今天自动生成的 Task：早上学习 Python
+    #
+    # 那么这条 Task 的 source_habit 就会指向“早上学习 Python”这个 Habit
+    #
+    # null=True / blank=True：
+    # 允许为空，因为普通手动添加的任务不是由习惯生成的
+    #
+    # on_delete=models.SET_NULL：
+    # 如果以后某个习惯被删除，已经生成过的历史 Task 不删除，
+    # 只是把 source_habit 清空，保留历史行动记录。
 
     planned_start = models.TimeField(
         null=True,
