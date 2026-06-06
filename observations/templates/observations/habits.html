@@ -125,11 +125,12 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 14px;
-            padding: 18px 20px;
+            gap: 12px;
+            padding: 18px;
             border-radius: 22px;
-            background: rgba(255, 255, 255, 0.76);
-            /* box-shadow: 0 10px 26px rgba(80, 70, 50, 0.05); */
+            background: rgba(255, 255, 255, 0.68);
+            box-shadow: 0 10px 30px rgba(70, 70, 50, 0.06);
+            margin-bottom: 12px;
         }
 
         .habit-title {
@@ -141,15 +142,23 @@
         }
 
         .habit-circle {
-            width: 22px;
-            height: 22px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
             border: 2px solid #b9afa0;
             flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #6f665c;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 700;
         }
 
         .habit-text {
             flex: 1;
+            min-width: 0;
             font-size: 16px;
             color: #33302b;
         }
@@ -161,8 +170,8 @@
 
         .habit-days {
             flex-shrink: 0;
-            color: #8b8173;
-            font-size: 14px;
+            color: #9a9186;
+            font-size: 13px;
             white-space: nowrap;
         }
 
