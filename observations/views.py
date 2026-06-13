@@ -13,15 +13,16 @@ from django.contrib.auth.decorators import login_required
 def home(request):
     """ 首页视图函数。
 
-    这一版做 6 件事：
+    当前页面只负责展示今日摘要
+
+    主要做几件事
     1. 获取今天日期
-    2. 获取或创建今天的状态记录
-    3. 处理新增任务
-    4. 处理今日状态保存
-    5. 从数据库读取所有任务
-    6. 把数据交给 home.html 页面显示
-    7. request获取浏览器所有信息
-    8. get_or_create查询or创建 是否刚创建True/Flash,所以必须要有两个变量来接收
+    2. 获取或创建今天的 DailyRecord
+    3. 读取今天所有任务
+    4. 统计待完成、已完成、总行动数
+    5. 把数据交给 home.html 页面显示
+    6. 筛选首页重点关注任务
+    7. 把数据交给 home.html 页面显示
     """
     
     today = datetime.now()
@@ -31,59 +32,11 @@ def home(request):
         user=request.user,
         date=today.date()
     )
-    #today_record接收DailyRecord里的符合today.date日期的数据 
-    #get_or_create如果有数据直接给today同时返回一个flash给created
-    #get_or_create如果没有数据就新建一个符合today.date日期的数据同时返回一个True给created
 
-
-    if request.method == "POST":
-        #method 浏览器的请求方式GET/POST
-        #判断用户是否提交数据
-
-        form_type = request.POST.get("form_type")
-        #获取浏览器里提交的("form_type")数据给到变量form_type
-
-        if form_type == "task":
-            #判断变量form_type里的数据是不是task
-
-            title = request.POST.get("title")
-            #获取浏览器提交的("title")数据给到变量title
-
-            if title:
-                Task.objects.create(
-                    title=title,
-                    daily_record=today_record,
-                )
-            #如果变量title里有数据 create就在Task类里添加一条数据
-            #并把变量里的title数据 保存到Task类里的title字段
-            #daily_record=today_record
-            
-            #刷新home页面
-            return redirect("home")
-
-
-
-    # tasks = Task.objects.filter(
-    #     daily_record=today_record
-    # ).order_by("-created_at")
-    # #created_at是Task里创建时间字段
-    # #("-created_at")-倒序
-    # #.order_by() 按某个字段排序
-    # #daily_record=today_record 把这条任务绑定到今天这条日期上
-
-    # total_count = tasks.count()
-    # #.count()统计数量
-    # #.count()统计tasks里有多少数量 保存到total_count里
-
-    # done_count = tasks.filter(is_done=True).count()
-    # #.filter() 筛选
-    # #tasks.filter(is_done=True)筛选(is_done=True)的数据
-    # #筛选完后.count()统计数量
-    # #统计有多少已完成的任务 保存到done_count里
-    # 今天全部任务
-
+    #今天的所有任务
     tasks = Task.objects.filter(
-        daily_record=today_record
+        daily_record=today_record,
+        is_cancelled=False
     ).order_by("-created_at")
 
     # 今天未完成任务
@@ -92,31 +45,29 @@ def home(request):
     # 今天已完成任务
     done_tasks = tasks.filter(is_done=True)
 
-    # 首页只显示前 2 条未完成任务
+    # 今天标记的重点任务
     next_tasks = undone_tasks.filter(
         show_on_home=True
     )
 
-    # 数量统计
+    # .count数量统计
     undone_count = undone_tasks.count()
     done_count = done_tasks.count()
     total_count = tasks.count()
 
     context = {
         #左边是html里使用的名字
-        #Python里的真实变量
+        #右边Python里的真实变量
         #.strftime()把日期时间05/31格式化成指定名字05月/31日
-        #today.weekday()
         #.weekday()计算星期几,并返回对应编号
         "title":"个人观察助手",
         "date_text" : today.strftime("%m月%d日"),
         "weekday_text":["星期一","星期二","星期三","星期四","星期五","星期六","星期日"][today.weekday()],
-        "tasks": tasks,
-        "next_tasks": next_tasks,
-        "undone_count": undone_count,
-        "done_count": done_count,
-        "total_count": total_count,
-        "today_record":today_record,
+        "next_tasks": next_tasks,#今天重点任务
+        "undone_count": undone_count,#今天未完成任务统计
+        "done_count": done_count,#今天已完成任务统计
+        "total_count": total_count,#今天所有任务统计
+        "today_record":today_record,#今天的状态
     }
 
     return render(request,"observations/home.html",context)
@@ -125,7 +76,7 @@ def home(request):
 @login_required
 def task_list_view(request):
     """
-    今日任务页视图函数
+    今日行动页视图函数
 
     这个页面专门负责:
     1.显示今天全部任务
@@ -140,35 +91,26 @@ def task_list_view(request):
         date=today.date()
     )
 
-        # 读取当前用户所有启用中的习惯。
+
+    # 读取当前用户所有启用中的习惯。
     # 这些习惯会自动生成到今天的“今日行动”里。
     active_habits = Habit.objects.filter(
         user=request.user,
-        is_active=True
+        is_active=True,  #已启用的行动
+        is_deleted=False
     )
 
     for habit in active_habits:
         # 先检查今天是否已经有这条习惯生成过的 Task。
         # 如果已经存在，就不再重复生成。
         has_generated_task = Task.objects.filter(
-            daily_record=today_record,
-            source_habit=habit
+            daily_record=today_record,   #今天的daily_record_id
+            source_habit=habit,           #soure_habit_id
+            is_cancelled=False
         ).exists()
+        #.exists() 判断筛选数据返回True/False
 
         if has_generated_task:
-            continue
-
-        # 如果用户今天已经手动添加过一个同名任务，
-        # 就把这条手动任务和习惯关联起来，避免重复出现两条一样的行动。
-        same_title_task = Task.objects.filter(
-            daily_record=today_record,
-            title=habit.title,
-            source_habit__isnull=True
-        ).first()
-
-        if same_title_task:
-            same_title_task.source_habit = habit
-            same_title_task.save()
             continue
 
         # 如果今天还没有这条习惯对应的 Task，
@@ -179,15 +121,13 @@ def task_list_view(request):
             source_habit=habit,
             show_on_home=habit.default_focus
         )
+        #左边是字段名,右边是值
 
 
 
-
+    #添加今日任务
     if request.method == "POST":
         title = request.POST.get("title")
-
-    # 获取用户填写的计划开始时间和计划结束时间。
-    # 如果用户没有填写，就用 None，表示这个任务没有设置时间。
         planned_start = request.POST.get("planned_start") or None
         planned_end = request.POST.get("planned_end") or None
 
@@ -201,16 +141,21 @@ def task_list_view(request):
 
         return redirect("task_list")
     
+    #未完成任务
     undone_tasks = Task.objects.filter(
         daily_record=today_record,
-        is_done=False
+        is_done=False,
+        is_cancelled=False
     ).order_by("-created_at")
 
+    #已完成任务
     done_tasks = Task.objects.filter(
         daily_record=today_record,
-        is_done=True
+        is_done=True,
+        is_cancelled=False
     ).order_by("-created_at")
 
+    #统计未完成/已完成/总和数量
     undone_count =undone_tasks.count()
     done_count = done_tasks.count()
     total_count = undone_count+done_count
@@ -247,18 +192,22 @@ def record_view(request):
 
     if request.method == "POST":
         today_record.mood = request.POST.get("mood","")
+        #把提交的表单里的mood数据(空的也可以)给到模型里的mood字段
 
         energy = request.POST.get("energy")
+        #把提交的表单里的energy数据给到模型里的energy变量
 
         today_record.summary = request.POST.get("summary","")
+        #把提交的表单里的summary数据(空的也可以)给到模型里的summary字段
 
+        #energy变量转换成整型给到energy字段 else提交时如果没有数据可以起到把旧值清空作用
         if energy:
             today_record.energy = int(energy)
         else:
             today_record.energy = None
 
         today_record.save()
-        #保存
+        #保存数据入库SQLite
 
         return redirect("home")
         #保存后回到首页
@@ -283,24 +232,32 @@ def history_view(request):
     3.把整理好的历史数据交给history.html显示
     """
 
+    #找到当前网页登录的用户数据根据日期倒序排列,只显示前七天的一组数据给到records(列表)
     records = DailyRecord.objects.filter(
         user=request.user
     ).order_by("-date")[:7]
 
     history_items = []
 
+    #循环records列表逐条给到record变量
     for record in records:
-        tasks=record.tasks.all().order_by("-created_at")
+        #反向查询当前record变量下相关DailyRecord_id的Task.daily_record_id数据,根据创建时间倒序,给到左边变量tasks
+        tasks=record.tasks.filter(
+            is_cancelled=False
+        ).order_by("created_at")
 
+        #根据tasks变量的数据统计数量
         total_count= tasks.count()
 
+        #筛选tasks里的Task.daily_record_id的is_done=True的数据统计 给到左边变量为已完成的任务
         done_count = tasks.filter(is_done=True).count()
 
+        #total_count列表
         history_items.append({
-            "record": record,
-            "tasks": tasks,
-            "total_count": total_count,
-            "done_count": done_count,
+            "record": record,#一组DailyRecord对象
+            "tasks": tasks,#相关daily_record_id列表
+            "total_count": total_count,#daily_record_id数量
+            "done_count": done_count,#daily_record_id里is_done为True的数量
         })
 
     context={
@@ -337,12 +294,12 @@ def habits_view(request):
             habit = Habit.objects.create(
                 user=request.user,
                 title=title,
-                is_active=True
+                is_active=True # is_active=True 表示新建后默认启用
             )
             #创建Habit,
             #user=request.user表示这个习惯属于当前登录用户
             # title=title 表示习惯名称
-            # is_active=True 表示新建后默认启用
+            
 
             HabitPeriod.objects.create(
                 habit=habit,
@@ -359,13 +316,15 @@ def habits_view(request):
     active_habits = Habit.objects.filter(
         #查询当前用户已经启用的习惯
         user=request.user,
-        is_active=True
+        is_active=True,
+        is_deleted=False
     ).order_by("-created_at")
 
     paused_habits = Habit.objects.filter(
         #查询当前用户已经暂停的习惯
         user=request.user,
-        is_active=False
+        is_active=False,
+        is_deleted=False
     ).order_by("-created_at")
 
 
@@ -377,22 +336,17 @@ def habits_view(request):
         #找到这个习惯当前正在持续的周期
         #end_date为空,表示这一段还没结束
         current_period = habit.periods.filter(
-            end_date__isnull = True
+            end_date__isnull = True  #__isnull这里要用查询 不能直接=True
         ).order_by("-start_date").first()
 
         if current_period:
-            #持续天数 = 今天 - 开始日期 + 1
-            # +1 是为了让今天刚创建的习惯显示为"已持续1天"
+            #计算启用时间
             active_days = (today - current_period.start_date).days +1
-        else:
-            active_days = 1
-            #理论上每个启用中的习惯都应该有一个未结束周期,
-            #这里写 1 是为了防止旧数据异常导致页面报错.
-
-        active_habit_items.append({
-            "habit": habit,
-            "active_days":active_days,
-        })
+            
+            active_habit_items.append({
+                "habit": habit,
+                "active_days":active_days,
+            })
 
     context={
         "title":"习惯",
@@ -415,7 +369,8 @@ def delete_task(request, task_id):
 
     # 根据任务 id 找到对应任务
     # 如果找不到，就返回 404，避免程序直接报错
-    task = get_object_or_404(Task, id=task_id)
+    task =  get_object_or_404(Task, id=task_id)
+    # Task.objects.get(id=task_id) 
 
     # 删除这条任务
     task.delete()
@@ -423,126 +378,41 @@ def delete_task(request, task_id):
     # 删除后回到今日任务页，而不是首页
     return redirect("task_list")
 
+
 @login_required
-def pause_habit(request,habit_id):
+def pause_habit(request, habit_id):
     """
     暂停习惯
 
-    触发方式:
-    用户在"启用中"区域点击习惯文字.
+    做三件事：
+    1. 把 Habit.is_active 改成 False
+    2. 把当前正在持续的 HabitPeriod 结束日期设为今天
+    3. 把今天未完成的习惯任务标记为取消，而不是直接删除
 
-    做两件事
-    1.把Habit.is_active改成False
-    2.把当前正在持续的HAbitperiod结束日期设为今天
-
-    注意:
-    这里只允许操作当前登录用户自己的习惯
+    这样做的原因：
+    个人观察助手需要保留长期真实数据。
+    直接 delete Task 会丢失“这个习惯今天曾经生成过任务”的历史痕迹。
     """
 
     today = datetime.now().date()
 
-    habit = Habit.objects.get(
+    habit = get_object_or_404(
+        Habit,
         id=habit_id,
-        user = request.user
+        user=request.user,
+        is_deleted=False
     )
-    #根据habit_id找到习惯
-    #user = request.user 是为了保证用户只能操作自己的习惯
 
     habit.is_active = False
-    #把习惯改成已暂停
     habit.save()
-    #保存
 
     current_period = habit.periods.filter(
-        end_date__isnull = True
+        end_date__isnull=True
     ).order_by("-start_date").first()
-    #找到这个习惯当前还没有结束的持续周期
 
     if current_period:
         current_period.end_date = today
         current_period.save()
-        # 把当前持续周期的结束日期设置为今天
-        #为什么有些地方需要用到保存 有些地方不用特意这样.save去保存
-
-        today_record = DailyRecord.objects.filter(
-        user=request.user,
-        date=today
-    ).first()
-
-    if today_record:
-        Task.objects.filter(
-            daily_record=today_record,
-            source_habit=habit
-        ).delete()
-
-    return redirect("habits")
-
-@login_required
-def resume_habit(request,habit_id):
-    """
-    恢复习惯
-
-    触发方式:
-    用户在"已暂停"区域点击习惯文字.
-
-    做两件事:
-    1.把Habit.is_active改成True
-    2.新建一条HabitPeriod
-    """
-
-    today = datetime.now().date()
-
-    habit = Habit.objects.get(
-        id=habit_id,
-        user=request.user
-    )
-    # 只允许恢复当前登录用户自己的习惯
-
-    habit.is_active=True
-    habit.save()
-    #把习惯改回启用中
-
-    has_open_period = habit.periods.filter(
-        end_date__isnull = True
-    ).exists()
-    #检查是否已经存在一条未结束的周期
-    #正常情况下,已暂停的习惯不应该有未结束周期
-    #这里做检查,是为了防止重复创建
-
-    if not has_open_period:
-        HabitPeriod.objects.create(
-            habit=habit,
-            start_date=today
-        )
-        #新建一段新的持续周期
-        #end_date 默认为空，表示正在持续中
-
-    return redirect("habits")
-
-@login_required
-def delete_habit(request,habit_id):
-    """
-    删除习惯
-
-    触发方式:
-    用户在"已暂停"区域点击删除
-
-    当前规则:
-    只允许删除已暂停的习惯
-    启用中的习惯不能直接删除,必须先暂停再删除.
-    """
-
-    
-
-
-    habit= Habit.objects.get(
-        id=habit_id,
-        user=request.user,
-        is_active=False
-    )
-    #只允许删除当前登录用户自己的,并且已经暂停的习惯
-
-    today = datetime.now().date()
 
     today_record = DailyRecord.objects.filter(
         user=request.user,
@@ -552,19 +422,114 @@ def delete_habit(request,habit_id):
     if today_record:
         Task.objects.filter(
             daily_record=today_record,
-            source_habit=habit
-        ).delete()
-
-
-    habit.delete()
-    #删除Habit后,相关的HabitPeriod会因为on_delete=models.CASCADE一起删除
-
-    
+            source_habit=habit,
+            is_done=False,
+            is_cancelled=False
+        ).update(
+            is_cancelled=True,
+            cancelled_at=timezone.now(),
+            show_on_home=False
+        )
 
     return redirect("habits")
 
 
+@login_required
+def resume_habit(request, habit_id):
+    """
+    恢复习惯
 
+    做两件事：
+    1. 把 Habit.is_active 改成 True
+    2. 如果当前没有未结束周期，就新建一条 HabitPeriod
+
+    注意：
+    已经软删除的习惯不能恢复。
+    """
+
+    today = datetime.now().date()
+
+    habit = get_object_or_404(
+        Habit,
+        id=habit_id,
+        user=request.user,
+        is_active=False,
+        is_deleted=False
+    )
+
+    habit.is_active = True
+    habit.save()
+
+    has_open_period = habit.periods.filter(
+        end_date__isnull=True
+    ).exists()
+
+    if not has_open_period:
+        HabitPeriod.objects.create(
+            habit=habit,
+            start_date=today
+        )
+
+    return redirect("habits")
+
+@login_required
+def delete_habit(request, habit_id):
+    """
+    删除习惯
+
+    注意：
+    这里不做数据库真删除，而是软删除。
+
+    原因：
+    个人观察助手需要长期保存真实数据。
+    如果直接 habit.delete():
+    1. Habit 会消失
+    2. HabitPeriod 会被 CASCADE 一起删除
+    3. Task.source_habit 会因为 SET_NULL 变成空
+    4. 后续 AI 分析会失去“任务来源于哪个习惯”的依据
+    """
+
+    today = datetime.now().date()
+
+    habit = get_object_or_404(
+        Habit,
+        id=habit_id,
+        user=request.user,
+        is_active=False,
+        is_deleted=False
+    )
+
+    habit.is_active = False
+    habit.is_deleted = True
+    habit.deleted_at = timezone.now()
+    habit.save()
+
+    current_period = habit.periods.filter(
+        end_date__isnull=True
+    ).order_by("-start_date").first()
+
+    if current_period:
+        current_period.end_date = today
+        current_period.save()
+
+    today_record = DailyRecord.objects.filter(
+        user=request.user,
+        date=today
+    ).first()
+
+    if today_record:
+        Task.objects.filter(
+            daily_record=today_record,
+            source_habit=habit,
+            is_done=False,
+            is_cancelled=False
+        ).update(
+            is_cancelled=True,
+            cancelled_at=timezone.now(),
+            show_on_home=False
+        )
+
+    return redirect("habits")
 
 @login_required
 def toggle_task(request, task_id):

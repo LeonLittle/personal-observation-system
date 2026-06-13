@@ -100,7 +100,7 @@ class Task(models.Model):
     )
     #ForeignKey每一条Task任务,都指向一条DailyRecord每日记录 
     #on_delete = models.CASCADE阿如果被指向的DailyRecord被删除,那么指向它的Task也一起删除
-    #related_name
+    #related_name="tasks"反向查询与DailyRecord_id关联的所有数据
 
 
     title = models.CharField(
@@ -114,6 +114,16 @@ class Task(models.Model):
     )
     #BooleanField布尔字段 只有True/False这两种状态  default=False默认是空,手动完成
 
+    is_cancelled = models.BooleanField(
+        default=False,
+        verbose_name="是否已取消"
+    )
+
+    cancelled_at = models.DateTimeField(
+    null=True,
+    blank=True,
+    verbose_name="取消时间"
+    )
     
 
     show_on_home = models.BooleanField(
@@ -129,20 +139,7 @@ class Task(models.Model):
         related_name="generated_tasks",
         verbose_name="来源习惯"
     )
-    # source_habit 用来记录这条 Task 是不是由某个习惯生成的
-    #
-    # 例如：
-    # 习惯：早上学习 Python
-    # 今天自动生成的 Task：早上学习 Python
-    #
-    # 那么这条 Task 的 source_habit 就会指向“早上学习 Python”这个 Habit
-    #
-    # null=True / blank=True：
-    # 允许为空，因为普通手动添加的任务不是由习惯生成的
-    #
-    # on_delete=models.SET_NULL：
-    # 如果以后某个习惯被删除，已经生成过的历史 Task 不删除，
-    # 只是把 source_habit 清空，保留历史行动记录。
+
 
     planned_start = models.TimeField(
         null=True,
@@ -214,6 +211,18 @@ class Habit(models.Model):
     #True表示启用中
     #Flase表示已暂停
 
+    is_deleted = models.BooleanField(
+        default=False,
+        verbose_name="是否已删除"
+    )
+
+    deleted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="删除时间"
+    )
+
+
     default_focus = models.BooleanField(
         default=False,
         verbose_name="是否默认重点关注"
@@ -258,7 +267,7 @@ class HabitPeriod(models.Model):
         verbose_name = "所属习惯"
     )
     #每一段周期都属于一个Habit
-    #related_name="periods" 表示以后可以通过habit.periods 找到这个习惯的所有周期
+    #related_name="periods" 表示以后可以通过habit.periods 找到这个习惯的周期
 
     start_date  = models.DateField(
         default = date.today,
