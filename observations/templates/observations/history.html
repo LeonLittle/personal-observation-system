@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -5,49 +6,31 @@
     <title>{{ title }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <link rel="stylesheet" href="{% static 'observations/base.css' %}">
+
     <style>
-        * {
-            box-sizing: border-box;
-        }
+        /*
+            每周观察页独有样式。
 
-        body {
-            margin: 0;
-            min-height: 100vh;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
-            background:
-                radial-gradient(circle at top left, rgba(255, 244, 214, 0.9), transparent 32%),
-                linear-gradient(135deg, #f7f3ea 0%, #eef3f7 100%);
-            color: #222;
-        }
+            公共样式已经交给 base.css：
+            - *
+            - body
+            - page
+            - system-name
+            - system-subtitle
+            - section-title
+            - empty-card
+            - top-nav
+            - top-nav a
+            - top-nav a.active
 
-        .page {
-            width: 100%;
-            max-width: 760px;
-            margin: 0 auto;
-            padding: 32px 20px 48px;
-        }
+            所以这里不要再重复写这些公共样式。
+        */
 
-
-        .system-name {
-            font-size: 28px;
-            font-weight: 700;
-            letter-spacing: -0.04em;
-            margin: 0;
-        }
-
-        .system-subtitle {
-            margin-top: 8px;
-            font-size: 14px;
-            color: #7a756b;
-        }
-
-        .section-title {
-            margin-top: 32px;
-            margin-bottom: 16px;
-            font-size: 20px;
-            font-weight: 700;
-        }
-
+        /*
+            每一天的观察卡片。
+            这是历史页自己的内容结构，不放进 base.css。
+        */
         .history-card {
             margin-bottom: 16px;
             padding: 22px;
@@ -58,6 +41,9 @@
             border: 1px solid rgba(255, 255, 255, 0.75);
         }
 
+        /*
+            日期标题，例如：06月15日。
+        */
         .history-date {
             font-size: 18px;
             font-weight: 700;
@@ -65,6 +51,9 @@
             margin-bottom: 16px;
         }
 
+        /*
+            状态 / 精力 / 任务 三个小统计格子。
+        */
         .info-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -90,6 +79,9 @@
             color: #33302b;
         }
 
+        /*
+            当天总结文字。
+        */
         .summary {
             margin-top: 14px;
             padding-top: 14px;
@@ -99,6 +91,10 @@
             font-size: 14px;
         }
 
+        /*
+            任务明细展开区域。
+            点击任务 3/5 可以展开当天任务列表。
+        */
         .task-details {
             cursor: pointer;
         }
@@ -116,6 +112,9 @@
             grid-column: 1 / -1;
         }
 
+        /*
+            展开后的任务列表。
+        */
         .history-task-list {
             margin-top: 14px;
             padding-top: 12px;
@@ -147,6 +146,7 @@
 
         .history-task-title {
             flex: 1;
+            min-width: 0;
         }
 
         .history-task-time {
@@ -161,53 +161,12 @@
             font-size: 14px;
         }
 
-        .empty-card {
-            padding: 24px;
-            border-radius: 26px;
-            background: rgba(255, 255, 255, 0.72);
-            box-shadow: 0 16px 45px rgba(80, 70, 50, 0.09);
-            color: #7a756b;
-            line-height: 1.7;
-        }
-
-        .top-nav {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 6px;
-            margin: 14px 0 16px;
-            padding: 6px;
-            border-radius: 18px;
-            background: rgba(255, 255, 255, 0.58);
-            box-shadow: 0 10px 26px rgba(80, 70, 50, 0.06);
-        }
-
-        .top-nav a {
-            display: block;
-            padding: 9px 4px;
-            border-radius: 14px;
-            color: #7a756b;
-            font-size: 13px;
-            font-weight: 650;
-            text-align: center;
-            text-decoration: none;
-            white-space: nowrap;
-        }
-
-        .top-nav a.active {
-            color: #3f372d;
-            background: rgba(246, 242, 233, 0.92);
-        }
-
-
+        /*
+            手机端：
+            这里只保留每周观察页独有的手机端样式。
+            page、system-name、top-nav 已经交给 base.css。
+        */
         @media (max-width: 520px) {
-            .page {
-                padding: 26px 16px 40px;
-            }
-
-            .system-name {
-                font-size: 25px;
-            }
-
             .info-grid {
                 grid-template-columns: 1fr;
             }
@@ -216,21 +175,6 @@
                 padding: 20px;
                 border-radius: 24px;
             }
-
-            .top-nav {
-                grid-template-columns: repeat(5, 1fr);
-                gap: 5px;
-                margin: 12px 0 14px;
-                padding: 5px;
-                border-radius: 16px;
-            }
-
-            .top-nav a {
-                padding: 8px 2px;
-                font-size: 12px;
-                border-radius: 12px;
-            }
-
         }
     </style>
 </head>

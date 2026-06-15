@@ -1,0 +1,507 @@
+/* 
+    个人观察助手 · 公共基础样式
+    文件位置：
+    observations/static/observations/base.css
+
+    当前阶段：Step 10.6.1
+    作用：
+    1. 先建立公共 CSS 文件
+    2. 先收集多个页面都会用到的基础样式
+    3. 暂时不删除各个 HTML 页面里的原有 CSS
+    4. 暂时不影响页面显示
+
+    注意：
+    这一步只是新增文件。
+    只有后续 HTML 页面引用这个文件后，它才会真正生效。
+*/
+
+
+/* 
+    一、全局基础设置
+
+    * 表示页面里所有元素。
+    box-sizing: border-box 的作用：
+    让 width / padding / border 的计算方式更稳定，
+    避免卡片、输入框在手机端被撑爆。
+*/
+* {
+    box-sizing: border-box;
+}
+
+
+/* 
+    二、页面整体背景和字体
+
+    这部分以 home.html 和 tasks.html 当前稳定风格为基准。
+    作用：
+    1. 统一页面默认边距
+    2. 统一字体
+    3. 统一柔和渐变背景
+    4. 统一基础文字颜色
+*/
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+    background:
+        radial-gradient(circle at top left, rgba(255, 244, 214, 0.9), transparent 32%),
+        linear-gradient(135deg, #f7f3ea 0%, #eef3f7 100%);
+    color: #222;
+}
+
+
+/* 
+    三、页面主容器
+
+    .page 是每个主要页面最外层的内容容器。
+    作用：
+    1. 控制页面最大宽度
+    2. 让内容居中
+    3. 控制页面上下左右留白
+*/
+.page {
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 20px 48px;
+}
+
+
+/* 
+    四、页面顶部区域
+
+    .header 通常包住标题、副标题、导航。
+*/
+.header {
+    margin-bottom: 28px;
+}
+
+
+/* 
+    五、页面主标题
+
+    system-name 是 home / tasks / record / history 当前使用的标题类名。
+    page-title 是 habits 当前使用的标题类名。
+
+    这里两个一起写，是为了兼容当前项目，不强行要求立刻改 HTML。
+*/
+.system-name,
+.page-title {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    margin: 0;
+}
+
+
+/* 
+    六、页面副标题
+
+    system-subtitle 是多数页面当前使用的副标题类名。
+    page-subtitle 是 habits 当前使用的副标题类名。
+*/
+.system-subtitle,
+.page-subtitle {
+    margin-top: 8px;
+    font-size: 14px;
+    color: #7a756b;
+    line-height: 1.6;
+}
+
+
+/* 
+    七、顶部导航
+
+    top-nav 是首页、行动、状态、习惯、观察之间的统一导航。
+    当前项目导航顺序是：
+    首页｜行动｜状态｜习惯｜观察
+*/
+.top-nav {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin: 16px 0 18px;
+    padding: 6px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.58);
+    box-shadow: 0 10px 26px rgba(80, 70, 50, 0.06);
+}
+
+
+/* 
+    八、导航里的每一个链接
+*/
+.top-nav a {
+    display: block;
+    padding: 9px 4px;
+    border-radius: 14px;
+    color: #7a756b;
+    font-size: 13px;
+    font-weight: 650;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+
+/* 
+    九、当前页面导航高亮
+
+    例如当前在“习惯”页，则“习惯”这个导航会亮起来。
+*/
+.top-nav a.active {
+    color: #3f372d;
+    background: rgba(246, 242, 233, 0.92);
+}
+
+
+/* 
+    十、通用区域标题
+
+    例如：
+    今日重点
+    未完成
+    已完成
+    启用中
+    已暂停
+*/
+.section-title {
+    margin-top: 34px;
+    margin-bottom: 14px;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+
+/* 
+    十一、通用白色卡片
+
+    card 是基础卡片。
+    适合后续习惯页、观察页、AI 页面复用。
+*/
+.card {
+    margin-top: 18px;
+    padding: 22px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow: 0 14px 36px rgba(80, 70, 50, 0.08);
+}
+
+
+/* 
+    十二、任务卡片
+
+    当前主要用于：
+    首页重点关注任务
+    今日行动页任务列表
+*/
+.task-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.68);
+    box-shadow: 0 10px 30px rgba(70, 70, 70, 0.06);
+    margin-bottom: 12px;
+}
+
+
+/* 
+    十三、已完成任务状态
+
+    done 类用于任务完成后降低视觉权重。
+*/
+.task-card.done {
+    opacity: 0.62;
+}
+
+
+/* 
+    十四、已完成任务文字
+
+    完成后文字加删除线。
+*/
+.task-card.done .task-text {
+    text-decoration: line-through;
+    color: #8b8376;
+}
+
+
+/* 
+    十五、任务圆圈
+
+    当前用于今日行动的完成 / 恢复按钮。
+    注意：
+    习惯页不一定需要这个圆圈，因为习惯页的文字本身就是暂停 / 恢复入口。
+*/
+.task-circle {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid #b9afa0;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #6f665c;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+
+/* 
+    十六、任务文字
+*/
+.task-text {
+    flex: 1;
+    font-size: 16px;
+    color: #33302b;
+}
+
+
+/* 
+    十七、任务标题链接
+
+    今日行动页里，点击任务文字可以切换重点关注。
+    所以链接需要看起来像普通文字。
+*/
+.task-title-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+
+/* 
+    十八、任务时间
+
+    例如：
+    09:00 - 10:00
+*/
+.task-time {
+    color: #9a9186;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+
+/* 
+    十九、空状态卡片
+
+    例如：
+    今天还没有任务
+    暂时没有历史记录
+*/
+.empty-card {
+    padding: 18px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.68);
+    color: #7a756b;
+    line-height: 1.7;
+}
+
+
+/* 
+    二十、删除链接
+
+    例如：
+    删除任务
+    删除已暂停习惯
+*/
+.delete-link {
+    color: #b0a69a;
+    font-size: 14px;
+    text-decoration: none;
+    padding: 6px 8px;
+    border-radius: 12px;
+    white-space: nowrap;
+}
+
+
+/* 
+    二十一、删除链接悬停状态
+
+    鼠标放上去时，颜色稍微加深。
+*/
+.delete-link:hover {
+    color: #6f665c;
+    background: rgba(120, 110, 90, 0.08);
+}
+
+
+/* 
+    二十二、通用添加表单
+
+    当前主要用于：
+    今日行动添加任务
+    后续也可以给习惯页表单参考
+*/
+.add-form {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+
+/* 
+    二十三、任务输入框
+
+    当前用于今日行动页的任务输入。
+*/
+.task-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    border-radius: 22px;
+    padding: 17px 18px;
+    font-size: 16px;
+    color: #33302b;
+    background: rgba(255, 255, 255, 0.76);
+    box-shadow: 0 12px 34px rgba(80, 70, 50, 0.08);
+}
+
+
+/* 
+    二十四、输入框占位文字
+*/
+.task-input::placeholder {
+    color: #aaa196;
+}
+
+
+/* 
+    二十五、添加按钮
+
+    当前用于：
+    添加今日行动
+    添加习惯
+*/
+.add-button {
+    border: none;
+    border-radius: 22px;
+    padding: 17px 20px;
+    font-size: 16px;
+    font-weight: 650;
+    color: #3f372d;
+    background: rgba(255, 255, 255, 0.76);
+    box-shadow: 0 12px 34px rgba(80, 70, 50, 0.08);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+
+/* 
+    二十六、习惯列表卡片
+
+    habit-item 是习惯页的一条习惯。
+    当前先把它放进公共 CSS，后续 Step 10.6.2 再让 habits.html 引用。
+*/
+.habit-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.68);
+    box-shadow: 0 10px 30px rgba(70, 70, 70, 0.06);
+    margin-bottom: 12px;
+}
+
+
+/* 
+    二十七、习惯标题区域
+
+    左侧放习惯名称，右侧放启用天数或删除链接。
+*/
+.habit-title {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+}
+
+
+/* 
+    二十八、习惯文字
+*/
+.habit-text {
+    flex: 1;
+    min-width: 0;
+    font-size: 16px;
+    color: #33302b;
+}
+
+
+/* 
+    二十九、习惯标题链接
+
+    点击习惯文字可以暂停 / 恢复。
+*/
+.habit-title-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+
+/* 
+    三十、习惯启用天数文字
+
+    例如：
+    已启用 3 天
+*/
+.habit-days {
+    flex-shrink: 0;
+    color: #9a9186;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+
+/* 
+    三十一、手机端适配
+
+    max-width: 520px 表示屏幕宽度小于等于 520px 时生效。
+    主要针对手机端。
+*/
+@media (max-width: 520px) {
+    .page {
+        padding: 26px 16px 40px;
+    }
+
+    .system-name,
+    .page-title {
+        font-size: 25px;
+    }
+
+    .top-nav {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 5px;
+        margin: 12px 0 14px;
+        padding: 5px;
+        border-radius: 16px;
+    }
+
+    .top-nav a {
+        padding: 8px 2px;
+        font-size: 12px;
+        border-radius: 12px;
+    }
+
+    .add-form {
+        flex-direction: column;
+    }
+
+    .task-time {
+        font-size: 12px;
+    }
+
+    .add-button {
+        width: 100%;
+    }
+
+    .habit-item {
+        align-items: flex-start;
+    }
+}
