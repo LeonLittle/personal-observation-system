@@ -209,14 +209,19 @@ def record_view(request):
         today_record.save()
         #保存数据入库SQLite
 
-        return redirect("home")
-        #保存后回到首页
+        return redirect("record")
+        #保存后回到本页
+
+        
+    ticket_data = today_ticket(today_record)
+    
 
     context = {
         "title":"今日状态记录",
         "date_text" : today.strftime("%m月%d日"),
         "weekday_text":["星期一","星期二","星期三","星期四","星期五","星期六","星期日"][today.weekday()],
         "today_record":today_record,
+        "ticket_data":ticket_data,
     }
     
     return render(request,"observations/record.html",context)
@@ -584,3 +589,114 @@ def toggle_home_focus(request, task_id):
 
     # 回到今日任务页
     return redirect("task_list")
+
+
+
+def today_ticket(today_record):
+    """
+    今日小票数据统计 数据生成  制定规则
+    """
+
+    mood=today_record.mood or ""
+    energy=today_record.energy 
+    summary=today_record.summary or ""
+
+    has_today_state=(
+        mood 
+        or energy is not None 
+        or summary
+    )
+
+    has_today_state=(
+        mood.strip()
+        or energy is not None
+        or summary.strip()
+    )
+
+    if not has_today_state:
+        return None
+    
+    tasks = today_record.tasks.filter(
+        is_cancelled=False
+    )
+
+    total_count = tasks.count()
+    done_count = tasks.filter(
+        is_done=True
+    ).count()
+
+    if energy is None:
+        body_text = "信号未记录"
+    elif energy <= 4 :
+        body_text = "低电量模式"
+    elif energy <= 7 :
+        body_text = "普通运行中"
+    else:
+        body_text = "状态在线"
+
+    if total_count == 0:
+        completion_rate = None
+        action_text = "今日未派单"
+    else:
+        completion_rate = done_count / total_count
+
+        if completion_rate < 0.4:
+            action_text = "间歇性上线"
+        elif completion_rate < 0.8:
+            action_text = "缓慢推进"
+        else:
+            action_text = "稳定在线"
+
+    if "焦躁" in mood or "冒烟" in mood:
+        emotion_text = "轻微冒烟"
+    elif "空" in mood:
+        emotion_text = "有点空"
+    elif "平稳" in mood:
+        emotion_text = "后台稳定"
+    elif "疲惫" in mood:
+        emotion_text = "低速运行"
+    elif "摆烂" in mood:
+        emotion_text = "暂停服务"
+    elif "充实" in mood:
+        emotion_text = "状态回暖"
+    else:
+        emotion_text = "后台运行中"
+    
+    summary_length = len(summary)
+
+    if summary_length == 0:
+        brain_text = "暂无记录信号"
+    elif summary_length <= 10:
+        brain_text = "简短汇报"
+    elif summary_length <=20:
+        brain_text = "正在处理信息"
+    else:
+        brain_text = "后台会议较多"
+
+    if energy is not None and energy <= 4:
+        result_text = "今天没有满分,但也没有清零"
+        voucher_text = "只要没清零，就还有明天"
+        stamp_text = "准许低功率运行"
+    elif total_count is not None and completion_rate>= 0.8:
+        result_text="建议奖励罐头一份"
+        stamp_text="不允许骄傲"
+    else:
+        result_text = "今天的你,主打一个能活就行."
+        voucher_text = "微弱发光，也算没黑屏"
+        stamp_text = "准许普通发光"
+
+
+    ticket_data = {
+        "body":body_text,
+        "action":action_text,
+        "emotion":emotion_text,
+        "brain":brain_text,
+        "task_text": f"{done_count} / {total_count}",
+        "energy_text": "未记录" if energy is None else f"{energy} / 10",#这个不是很重要 可以不显示
+        "result": result_text,
+        "stamp_text": stamp_text,
+        "voucher_text":voucher_text,
+    }
+
+    return ticket_data
+
