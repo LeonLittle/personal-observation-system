@@ -678,8 +678,9 @@ def today_ticket(today_record):
         voucher_text = "只要没清零，就还有明天"
         stamp_text = "准许低功率运行"
     elif total_count is not None and completion_rate>= 0.8:
-        result_text="建议奖励罐头一份"
-        stamp_text="不允许骄傲"
+        result_text="没有惊艳，但很可靠"
+        voucher_text = "可靠的人生，往往没有太多特效"
+        stamp_text="准许继续保持"
     else:
         result_text = "今天的你,主打一个能活就行."
         voucher_text = "微弱发光，也算没黑屏"
