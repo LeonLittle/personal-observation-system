@@ -1,6 +1,6 @@
 from django.shortcuts import render,redirect,get_object_or_404
 from django.utils import timezone
-from datetime import datetime
+from datetime import datetime,timedelta
 from .models import Task,DailyRecord,Habit,HabitPeriod
 #1. render作用:把数据交给HTML页面,然后生成网页返回给浏览器 意思:生成网页
 #2. redirect作用:跳转到另一个页面  意思:保存完任务后,重新回到首页 
@@ -237,10 +237,21 @@ def history_view(request):
     3.把整理好的历史数据交给history.html显示
     """
 
-    #找到当前网页登录的用户数据根据日期倒序排列,只显示前七天的一组数据给到records(列表)
+    today = datetime.now().date()
+
+    week_start,week_end = get_current_week_range(today)
+
+    week_summary = build_period_summary(
+        user=request.user,
+        start_date = week_start,
+        end_date = week_end,
+        expected_days=7
+    )
+
     records = DailyRecord.objects.filter(
-        user=request.user
-    ).order_by("-date")[:7]
+        user=request.user,
+        date__range=[week_start,week_end]
+    ).order_by("-date")
 
     history_items = []
 
@@ -255,7 +266,9 @@ def history_view(request):
         total_count= tasks.count()
 
         #筛选tasks里的Task.daily_record_id的is_done=True的数据统计 给到左边变量为已完成的任务
-        done_count = tasks.filter(is_done=True).count()
+        done_count = tasks.filter(
+            is_done=True
+        ).count()
 
         #total_count列表
         history_items.append({
@@ -266,7 +279,8 @@ def history_view(request):
         })
 
     context={
-        "title":"最近观察",
+        "title":"每周观察",
+        "week_summary":week_summary,
         "history_items":history_items,
     }
 
@@ -701,3 +715,143 @@ def today_ticket(today_record):
 
     return ticket_data
 
+def get_current_week_range(today_date):
+    """
+    计算当前日期所在这一周的开始日期和结束日期
+
+    当前项目规则:
+    1.一周从星期一开始
+    2.一周到星期日结束
+    3.本周观察只统计本周一到周日的数据
+    """
+
+    weekday_number = today_date.weekday()
+    #把日期转换为星期几然后返回数字给到weekday_number
+
+    week_start = today_date - timedelta(days=weekday_number)
+    
+
+    week_end = week_start + timedelta(days=6)
+    #
+
+    return week_start,week_end
+
+def build_period_summary(user,start_date,end_date,expected_days):
+    """
+    统计某一个时间段内的观察数据
+
+    这个函数不是只给"本周"用
+    以后本月/本年也可以复用
+    """
+
+    records = DailyRecord.objects.filter(
+        user=user,
+        date__range=[start_date,end_date]
+    )
+    #date字段是今天的日期
+    #这里的records定义是找到当前周一到周日之间数据 __range包含开始和结束
+
+    tasks = Task.objects.filter(
+        daily_record__user=user,
+        daily_record__date__range=[start_date,end_date],
+        is_cancelled=False
+    )
+    #然后这里再获取这个周期的任务
+    #这里daily_record__user=user 为什么要这么写 一个是为什么要加两个下划线然后user=user,后面的user是上面左边的user对吗
+    #daily_record__date__range=[start_date,end_date]这里也不理解
+    #is_cancelled=False没有取消的任务 这里为什么要这么写  取消的数据其实也可以加到数据统计里面,但是暂时先不考虑这个,但是需要给后期统计留上底座
+
+
+    record_days = 0
+    #记录天数起始为0
+
+    for record in records:
+        has_state=(
+            record.mood.strip()
+            or record.energy is not None
+            or record.summary.strip()
+        )
+        #这里是循环records数据 找出energny不为空
+        #.strip() 去掉字符串空格
+
+        if has_state:
+            record_days = record_days +1
+        #如果has_state有数据 这个记录天数就加1
+
+        total_actions = tasks.count()
+        #统计任务数量
+
+        done_actions = tasks.filter(
+            is_done=True
+        ).count()
+        #统计已完成任务数量
+
+        #这里开始分析任务数量  但是我还没打算怎么展示 所以这里不是重点
+        if total_actions == 0:
+            completion_rate = None
+            completion_rate_text = "本周无任务"
+        else:
+            completion_rate = done_actions / total_actions
+            completion_rate_text = f"{round(completion_rate * 100)}%"
+            #已完成数量转换成百分比
+            #round四舍五入
+
+        energy_records = records.filter(
+            energy__isnull=False
+        )
+        #这里是找精力值不是空的数据
+        #__isnull是否为空
+
+        energy_count = energy_records.count()
+        #多少条精力记录
+
+        #这里也是精力分析
+        if energy_count == 0:
+            energy_index = None
+            energy_index_text = "未记录"
+        else:
+            total_energy = 0
+
+            for record in energy_records:
+                total_energy = total_energy + record.energy
+            #循环每条精力记录 把值给到total_energy
+            
+            energy_index = total_energy / energy_count
+            #平均精力分
+            energy_index_text = f"{energy_index:.1f}"
+            #这里是精力文本显示1位数  
+
+        #这里是总的分析吗
+        if total_actions == 0 and record_days == 0:
+            summary_text = "这周没有留下记录"
+        #如果这周任务为0
+
+        elif energy_index is not None and energy_index <= 4:
+            summary_text = "这周精力偏低"
+        #如果这周精力小于等于4
+
+        elif completion_rate is not None and completion_rate >= 0.8:
+            summary_text = "这周任务推进得不错"
+        #如果这周任务完成度在80%以上
+
+        else:
+            summary_text = "这周有推进,也有留白"
+        #其他,就是有记录 精力在4以上 完成度在80%以下
+
+        period_summary={
+            "start_date":start_date, #开始日期
+            "end_date":end_date,    #结束日期
+            "start_text":start_date.strftime("%m月%d日"), #开始日期的文本格式我想是,但是不明白为什么要单独写着一条.strftime这个是什么意思 转换日期的吗
+            "end_text":end_date.strftime("%m月%d日"), #结束日期 和开始同形态
+            "record_days":record_days,#本周已记录天数的意思吗
+            "expected_days":expected_days,#这条也是上面没有的 但这条是函数的参数,不知道是什么意思
+            "total_actions":total_actions,#本周未取消任务
+            "done_actions": done_actions,#本周完成的任务
+            "completion_rate": completion_rate,#本周的任务完成度
+            "completion_rate_text": completion_rate_text,#本周的任务完成度文本
+            "energy_index": energy_index,#本周精力总数吗?
+            "energy_index_text": energy_index_text,#本周精力总数文本
+            "summary_text": summary_text,#这个就是分析的文案文本
+        }
+
+        return period_summary
