@@ -161,6 +161,85 @@
             font-size: 14px;
         }
 
+                /*
+            本周观察总览卡片：
+            只属于 history 页面，暂时不放进 base.css。
+        */
+        .week-summary-card {
+            margin-top: 24px;
+            padding: 26px;
+            border-radius: 28px;
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(18px);
+            box-shadow: 0 20px 60px rgba(80, 70, 50, 0.10);
+            border: 1px solid rgba(255, 255, 255, 0.75);
+        }
+
+        .week-summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .week-summary-title {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 750;
+            color: #2f2d29;
+        }
+
+        .week-summary-date {
+            padding-top: 4px;
+            font-size: 13px;
+            color: #8b8376;
+            white-space: nowrap;
+        }
+
+        .week-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .week-summary-item {
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: rgba(246, 242, 233, 0.72);
+        }
+
+        .week-summary-label {
+            font-size: 13px;
+            color: #8b8376;
+            margin-bottom: 6px;
+        }
+
+        .week-summary-value {
+            font-size: 20px;
+            font-weight: 750;
+            color: #3f372d;
+        }
+
+        .week-summary-text {
+            margin-top: 20px;
+            padding-top: 18px;
+            border-top: 1px dashed rgba(122, 117, 107, 0.28);
+            font-size: 15px;
+            line-height: 1.8;
+            color: #5f584f;
+        }
+
+        .week-record-title {
+            margin-top: 28px;
+            margin-bottom: 14px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #2f2d29;
+        }
+
+
         /*
             手机端：
             这里只保留每周观察页独有的手机端样式。
@@ -192,6 +271,53 @@
                 <a href="{% url 'habits' %}">习惯</a>
                 <a class="active" href="{% url 'history' %}">观察</a>
             </nav>
+
+                    <section class="week-summary-card">
+            <div class="week-summary-header">
+                <div>
+                    <h2 class="week-summary-title">本周观察</h2>
+                </div>
+
+                <div class="week-summary-date">
+                    {{ week_summary.start_text }} - {{ week_summary.end_text }}
+                </div>
+            </div>
+
+            <div class="week-summary-grid">
+                <div class="week-summary-item">
+                    <div class="week-summary-label">本周行动</div>
+                    <div class="week-summary-value">{{ week_summary.total_actions }}</div>
+                </div>
+
+                <div class="week-summary-item">
+                    <div class="week-summary-label">已完成</div>
+                    <div class="week-summary-value">{{ week_summary.done_actions }}</div>
+                </div>
+
+                <div class="week-summary-item">
+                    <div class="week-summary-label">完成率</div>
+                    <div class="week-summary-value">{{ week_summary.completion_rate_text }}</div>
+                </div>
+
+                <div class="week-summary-item">
+                    <div class="week-summary-label">精力指数</div>
+                    <div class="week-summary-value">{{ week_summary.energy_index_text }}</div>
+                </div>
+
+                <div class="week-summary-item">
+                    <div class="week-summary-label">记录天数</div>
+                    <div class="week-summary-value">
+                        {{ week_summary.record_days }} / {{ week_summary.expected_days }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="week-summary-text">
+                {{ week_summary.summary_text }}
+            </div>
+        </section>
+
+        <h2 class="week-record-title">本周记录</h2>
 
 
             
