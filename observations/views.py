@@ -2,6 +2,7 @@ from django.shortcuts import render,redirect,get_object_or_404
 from django.utils import timezone
 from datetime import datetime,timedelta
 from .models import Task,DailyRecord,Habit,HabitPeriod
+from .ai_service import call_agnes_for_today_ticket
 #1. render作用:把数据交给HTML页面,然后生成网页返回给浏览器 意思:生成网页
 #2. redirect作用:跳转到另一个页面  意思:保存完任务后,重新回到首页 
 #3. get_object_or_404作用:代码安全维护  意思:去数据库找某条数据;找不到就显示404错误页
@@ -604,6 +605,104 @@ def toggle_home_focus(request, task_id):
     # 回到今日任务页
     return redirect("task_list")
 
+def extract_ai_ticket_field(ai_text, field_name):
+    """
+    从 AI 返回的小票文本里，提取某一个字段的内容。
+
+    例如：
+    field_name = "脑子"
+    就从 AI 文本里找：
+    脑子：
+    后面的内容
+
+    如果找不到，就返回空字符串。
+    """
+
+    # 如果 AI 没有返回内容，直接返回空字符串
+    if not ai_text:
+        return ""
+
+    # 小票里可能出现的标题
+    field_names = ["脑子", "身体", "情绪", "行动力", "结算", "盖章"]
+
+    # 按行拆开，并去掉空行
+    lines = []
+
+    for line in ai_text.splitlines():
+        clean_line = line.strip()
+
+        if clean_line:
+            lines.append(clean_line)
+
+    collecting = False
+    result_lines = []
+
+    for line in lines:
+        # 去掉 Markdown 加粗符号，避免 **脑子：** 识别失败
+        clean_line = line.replace("**", "")
+
+        # 统一中文冒号和英文冒号
+        clean_line = clean_line.replace("：", ":")
+
+        # 判断这一行是不是某个字段标题
+        is_field_title = False
+
+        for name in field_names:
+            if clean_line.startswith(name + ":"):
+                is_field_title = True
+
+                # 如果当前已经在收集目标字段，
+                # 遇到下一个字段标题，就停止收集
+                if collecting and name != field_name:
+                    return " ".join(result_lines).strip()
+
+                # 如果这一行是目标字段，就开始收集
+                if name == field_name:
+                    collecting = True
+
+                    # 处理“脑子：内容”这种写在同一行的情况
+                    field_value = clean_line.split(":", 1)[1].strip()
+
+                    if field_value:
+                        result_lines.append(field_value)
+
+                break
+
+        # 如果这一行不是标题，并且已经开始收集目标字段
+        # 就把这一行加入结果
+        if collecting and not is_field_title:
+            result_lines.append(line.replace("**", "").strip())
+
+    return " ".join(result_lines).strip()
+
+def get_safe_ai_text(ai_data, key, max_length):
+    """
+    从 AI 返回的数据里取字段。
+
+    作用：
+    1. 如果字段不存在，返回空字符串
+    2. 如果字段太长，返回空字符串
+    3. 避免 AI 输出过长内容撑坏页面
+    """
+
+    if not ai_data:
+        return ""
+
+    value = ai_data.get(key, "")
+
+    if not value:
+        return ""
+
+    value = value.replace("：", ":")
+    if ":" in value:
+        value = value.split(":", 1)[1].strip()
+
+    if len(value) > max_length:
+        return ""
+
+    return value
+
+
 
 
 def today_ticket(today_record):
@@ -651,6 +750,7 @@ def today_ticket(today_record):
     if total_count == 0:
         completion_rate = None
         action_text = "今日未派单"
+
     else:
         completion_rate = done_count / total_count
 
@@ -691,7 +791,7 @@ def today_ticket(today_record):
         result_text = "今天没有满分,但也没有清零"
         voucher_text = "只要没清零，就还有明天"
         stamp_text = "准许低功率运行"
-    elif total_count is not None and completion_rate>= 0.8:
+    elif total_count >0 and completion_rate>= 0.8:
         result_text="没有惊艳，但很可靠"
         voucher_text = "可靠的人生，往往没有太多特效"
         stamp_text="准许继续保持"
@@ -712,6 +812,61 @@ def today_ticket(today_record):
         "stamp_text": stamp_text,
         "voucher_text":voucher_text,
     }
+
+    if total_count == 0:
+        completion_rate_text = "暂无行动"
+    else:
+        completion_rate_text = f"{round(completion_rate*100)}%"
+
+    today_summary = {
+        "mood": mood,
+        "energy": energy,
+        "summary": summary,
+        "total_count": total_count,
+        "done_count": done_count,
+        "completion_rate_text": completion_rate_text,
+
+        # 顺便把规则版分析结果也给 AI 参考
+        # 这样 AI 更容易生成贴近当前状态的小票文案
+        "rule_brain": brain_text,
+        "rule_body": body_text,
+        "rule_emotion": emotion_text,
+        "rule_action": action_text,
+    }
+
+    # 调用 Agnes AI
+    ai_data = call_agnes_for_today_ticket(today_summary)
+
+    if ai_data:
+        ai_brain = get_safe_ai_text(ai_data, "brain", 18)
+        ai_body = get_safe_ai_text(ai_data, "body", 18)
+        ai_emotion = get_safe_ai_text(ai_data, "emotion", 18)
+        ai_action = get_safe_ai_text(ai_data, "action", 22)
+        ai_result = get_safe_ai_text(ai_data, "result", 36)
+        ai_voucher = get_safe_ai_text(ai_data, "voucher_text", 26)
+        ai_stamp = get_safe_ai_text(ai_data, "stamp_text", 7)
+
+        if ai_brain:
+            ticket_data["brain"] = ai_brain
+
+        if ai_body:
+            ticket_data["body"] = ai_body
+
+        if ai_emotion:
+            ticket_data["emotion"] = ai_emotion
+
+        if ai_action:
+            ticket_data["action"] = ai_action
+
+        if ai_result:
+            ticket_data["result"] = ai_result
+
+        if ai_voucher:
+            ticket_data["voucher_text"]=ai_voucher
+
+        if ai_stamp:
+                ticket_data["stamp_text"] = ai_stamp
+    
 
     return ticket_data
 
@@ -778,80 +933,80 @@ def build_period_summary(user,start_date,end_date,expected_days):
             record_days = record_days +1
         #如果has_state有数据 这个记录天数就加1
 
-        total_actions = tasks.count()
+    total_actions = tasks.count()
         #统计任务数量
 
-        done_actions = tasks.filter(
-            is_done=True
-        ).count()
+    done_actions = tasks.filter(
+        is_done=True
+    ).count()
         #统计已完成任务数量
 
         #这里开始分析任务数量  但是我还没打算怎么展示 所以这里不是重点
-        if total_actions == 0:
-            completion_rate = None
-            completion_rate_text = "本周无任务"
-        else:
-            completion_rate = done_actions / total_actions
-            completion_rate_text = f"{round(completion_rate * 100)}%"
-            #已完成数量转换成百分比
-            #round四舍五入
+    if total_actions == 0:
+        completion_rate = None
+        completion_rate_text = "本周无任务"
+    else:
+        completion_rate = done_actions / total_actions
+        completion_rate_text = f"{round(completion_rate * 100)}%"
+        #已完成数量转换成百分比
+        #round四舍五入
 
-        energy_records = records.filter(
-            energy__isnull=False
-        )
+    energy_records = records.filter(
+        energy__isnull=False
+    )
         #这里是找精力值不是空的数据
         #__isnull是否为空
 
-        energy_count = energy_records.count()
-        #多少条精力记录
+    energy_count = energy_records.count()
+    #多少条精力记录
 
         #这里也是精力分析
-        if energy_count == 0:
-            energy_index = None
-            energy_index_text = "未记录"
-        else:
-            total_energy = 0
+    if energy_count == 0:
+        energy_index = None
+        energy_index_text = "未记录"
+    else:
+        total_energy = 0
 
-            for record in energy_records:
-                total_energy = total_energy + record.energy
-            #循环每条精力记录 把值给到total_energy
+        for record in energy_records:
+            total_energy = total_energy + record.energy
+        #循环每条精力记录 把值给到total_energy
             
-            energy_index = total_energy / energy_count
-            #平均精力分
-            energy_index_text = f"{energy_index:.1f}"
-            #这里是精力文本显示1位数  
+        energy_index = total_energy / energy_count
+        #平均精力分
+        energy_index_text = f"{energy_index:.1f}"
+        #这里是精力文本显示1位数  
 
         #这里是总的分析吗
-        if total_actions == 0 and record_days == 0:
-            summary_text = "这周没有留下记录"
-        #如果这周任务为0
+    if total_actions == 0 and record_days == 0:
+        summary_text = "这周没有留下记录"
+    #如果这周任务为0
 
-        elif energy_index is not None and energy_index <= 4:
-            summary_text = "这周精力偏低"
-        #如果这周精力小于等于4
+    elif energy_index is not None and energy_index <= 4:
+        summary_text = "这周精力偏低"
+    #如果这周精力小于等于4
 
-        elif completion_rate is not None and completion_rate >= 0.8:
-            summary_text = "这周任务推进得不错"
-        #如果这周任务完成度在80%以上
+    elif completion_rate is not None and completion_rate >= 0.8:
+        summary_text = "这周任务推进得不错"
+    #如果这周任务完成度在80%以上
 
-        else:
-            summary_text = "这周有推进,也有留白"
+    else:
+        summary_text = "这周有推进,也有留白"
         #其他,就是有记录 精力在4以上 完成度在80%以下
 
-        period_summary={
-            "start_date":start_date, #开始日期
-            "end_date":end_date,    #结束日期
-            "start_text":start_date.strftime("%m月%d日"), #开始日期的文本格式我想是,但是不明白为什么要单独写着一条.strftime这个是什么意思 转换日期的吗
-            "end_text":end_date.strftime("%m月%d日"), #结束日期 和开始同形态
-            "record_days":record_days,#本周已记录天数的意思吗
-            "expected_days":expected_days,#这条也是上面没有的 但这条是函数的参数,不知道是什么意思
-            "total_actions":total_actions,#本周未取消任务
-            "done_actions": done_actions,#本周完成的任务
-            "completion_rate": completion_rate,#本周的任务完成度
-            "completion_rate_text": completion_rate_text,#本周的任务完成度文本
-            "energy_index": energy_index,#本周精力总数吗?
-            "energy_index_text": energy_index_text,#本周精力总数文本
-            "summary_text": summary_text,#这个就是分析的文案文本
-        }
+    period_summary={
+        "start_date":start_date, #开始日期
+        "end_date":end_date,    #结束日期
+        "start_text":start_date.strftime("%m月%d日"), #开始日期的文本格式我想是,但是不明白为什么要单独写着一条.strftime这个是什么意思 转换日期的吗
+        "end_text":end_date.strftime("%m月%d日"), #结束日期 和开始同形态
+        "record_days":record_days,#本周已记录天数的意思吗
+        "expected_days":expected_days,#这条也是上面没有的 但这条是函数的参数,不知道是什么意思
+        "total_actions":total_actions,#本周未取消任务
+        "done_actions": done_actions,#本周完成的任务
+        "completion_rate": completion_rate,#本周的任务完成度
+        "completion_rate_text": completion_rate_text,#本周的任务完成度文本
+        "energy_index": energy_index,#本周精力总数吗?
+        "energy_index_text": energy_index_text,#本周精力总数文本
+        "summary_text": summary_text,#这个就是分析的文案文本
+    }
 
-        return period_summary
+    return period_summary
